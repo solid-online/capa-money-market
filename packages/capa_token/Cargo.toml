@@ -1,0 +1,27 @@
+[package]
+name = "capa-token"
+version = "0.3.0"
+authors = ["BIG Labs, Capapult PTE, Terraform Labs PTE"]
+edition = "2018"
+description = "Common helpers for other capa-token specs"
+license = "Apache-2.0"
+repository = "https://github.com/anchor-protocol/anchor-token-contracts"
+homepage = "https://terra.money"
+documentation = "https://docs.terra.money"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cw20 = { version = "0.13" } 
+cosmwasm-bignumber = { path = "../bignumber"}
+cosmwasm-std = "1.0.0"
+cosmwasm-storage = { version = "1.0.0" }
+terra-cosmwasm = { path = "../terra-cosmwasm"}
+schemars = "0.8.8"
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+
