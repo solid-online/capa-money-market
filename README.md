@@ -11,30 +11,28 @@ A Rust and [CosmWasm](https://cosmwasm.com/) implementation of the Capapult Prot
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
 | [`oracle`](./contracts/oracle)  | smart-contracts/money-market/oracle | Provides a price feed for LSD collaterals |
 | [`liquidation_queue`](./contracts/liquidation_queue)   | smart-contracts/money-market/liquidation_queue | Provides a queue for LSD collateral liquidations |
-| [`custody_lunax`](./contracts/custody_bluna)  | smart-contracts/money-market/custody_bluna | Handles LunaX collateral deposits and withdrawals |
+| [`custody_cw20`](./contracts/custody_cw20)  | smart-contracts/money-market/custody_bluna | Handles cw20 collaterals deposits and withdrawals |
 | [`market`](./contracts/market)  | smart-contracts/money-market/market) | Handles SOLID borrows and repay |
-| [`interest_model`](./contracts/interest_model)  | smart-contracts/money-market/interest_model |Calculates the current borrow interest rate based on the market situation |
 | [`overseer`](./contracts/overseer)  | smart-contracts/money-market/overseer | Manages money market overalls, stores borrower information |
 
 
 ## Addresses
 
-### Testnet Addresses
+### mainnet Addresses
 
 | Contract | Reference | Address|
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| Capa cw20 | [`cw20`]([./contracts/oracle](https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/README.md)) | [terra1a4ks4uh5sln95gvjfh938dy8c98lmzzfd2c6crup5jaeumupe5pqrprjvu](https://finder.terra.money/testnet/address/terra1a4ks4uh5sln95gvjfh938dy8c98lmzzfd2c6crup5jaeumupe5pqrprjvu)| 
-|Solid cw20 | [`cw20`]([./contracts/oracle](https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/README.md)) | [terra1fnn26z4nax3j8x87yvetctyanu757j022n9h2s6j3w7d5jt8cu4qasg94w](https://finder.terra.money/testnet/address/terra1fnn26z4nax3j8x87yvetctyanu757j022n9h2s6j3w7d5jt8cu4qasg94w)| 
-| Marekt  | [`market`](./contracts/market) | [terra1x27af9yrzl7jslj6pt78dmfsplsyye5qq2rgyz7nqw7myuw8hzcsftsukv](https://finder.terra.money/testnet/address/terra1x27af9yrzl7jslj6pt78dmfsplsyye5qq2rgyz7nqw7myuw8hzcsftsukv)| 
-| Oracle | [`oracle`](./contracts/oracle) | [terra1n0gqscjmpfpea60uuh5qrd4rk8tn944zcwdt098vyjcv39u3p4yq7acyp9](https://finder.terra.money/testnet/address/terra1n0gqscjmpfpea60uuh5qrd4rk8tn944zcwdt098vyjcv39u3p4yq7acyp9)| 
-| Interest model | [`interest model`](./contracts/interest_model) | [terra1m3wk4u86h6md4r4qem5fg8ulux2csav0tgd5jv0zc9q9yldjfl5qzd6frh](https://finder.terra.money/testnet/address/terra1m3wk4u86h6md4r4qem5fg8ulux2csav0tgd5jv0zc9q9yldjfl5qzd6frh)| 
-| Liquidation Queue | [`liquidation queue`](./contracts/liquidation_queue) | [terra15rd9a86u0xwphp4gnxuudwh45vnueesfccagf0srgyeg98t45yfslevy3y](https://finder.terra.money/testnet/address/terra15rd9a86u0xwphp4gnxuudwh45vnueesfccagf0srgyeg98t45yfslevy3y)| 
-| Custody LunaX | [`custody lunax`](./contracts/custody_lunax) | [terra175dhqrvthaxzfcfxmhx0xefmrjz5xd4lh8f3hfqntjmsucty4mdsnta7vp](https://finder.terra.money/testnet/address/terra175dhqrvthaxzfcfxmhx0xefmrjz5xd4lh8f3hfqntjmsucty4mdsnta7vp)| 
-| Collector | [`collector`]([./contracts/oracle](https://github.com/capapult-finance/capa-token/tree/main/contracts/collector)) | [terra1ffe4vx34u0vrq7ckk7r8zhwpxauwh4tlmqgfjxhta9a46vv5kqasv2cxe5](https://finder.terra.money/testnet/address/terra1ffe4vx34u0vrq7ckk7r8zhwpxauwh4tlmqgfjxhta9a46vv5kqasv2cxe5)| 
-| Governance | [`governance`](https://github.com/capapult-finance/capa-token/tree/main/contracts/gov) | [terra1th8ekpapwaqsrez02a2kwx6enxgd7k5u56hddspdxc4mth8alcaqslwg00](https://finder.terra.money/testnet/address/terra1th8ekpapwaqsrez02a2kwx6enxgd7k5u56hddspdxc4mth8alcaqslwg00)| 
-| Overseer | [`overseer`](./contracts/overseer) | [terra1p38ueh7yqdlafwlnxpt920tfn4h7ctd879lkwuwy3fy5c3cn3zfscm5l5q](https://finder.terra.money/testnet/address/terra1p38ueh7yqdlafwlnxpt920tfn4h7ctd879lkwuwy3fy5c3cn3zfscm5l5q)| 
-| Solid-Luna LP | [`Astro Lp`]([./contracts/oracle](https://docs.astroport.fi/astroport/smart-contracts/astroport-factory)) | [terra1a6s22uz7u27ea3kazhjcdhftjr7dwj5ty4r9tpae80c6nmtj85usrku4q4](https://finder.terra.money/testnet/address/terra1a6s22uz7u27ea3kazhjcdhftjr7dwj5ty4r9tpae80c6nmtj85usrku4q4)| 
-
+| Capa cw20 | [`cw20`]([./contracts/oracle](https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/README.md)) | [terra1sp74507a9fn8clm6s62r2sl8t22x5lgqyvagserksycsqn7lj9kqnvl005](https://finder.terra.money/mainnet/address/terra1sp74507a9fn8clm6s62r2sl8t22x5lgqyvagserksycsqn7lj9kqnvl005)| 
+|Solid cw20 | [`cw20`]([./contracts/oracle](https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/README.md)) | [terra1xmyxvkkrfwwaf84gydv6aff0pg4h50xlf5t9m89rjkdyhy60e9qqlkqvun](https://finder.terra.money/mainnet/address/terra103u503hvu7rexd2vlwcdr63d7875kynuwndjewrddn57fk75jw2qkzu2kl)| 
+| Marekt  | [`market`](./contracts/market) | [terra103u503hvu7rexd2vlwcdr63d7875kynuwndjewrddn57fk75jw2qkzu2kl](https://finder.terra.money/mainnet/address/terra103u503hvu7rexd2vlwcdr63d7875kynuwndjewrddn57fk75jw2qkzu2kl)| 
+| Oracle | [`oracle`](./contracts/oracle) | [terra1guvrwu6h9kq5w9dzlqftg4e6c35ywn9gsmueed50r6exzua560wqx9rt86](https://finder.terra.money/mainnet/address/terra1guvrwu6h9kq5w9dzlqftg4e6c35ywn9gsmueed50r6exzua560wqx9rt86)|  
+| Liquidation Queue | [`liquidation queue`](./contracts/liquidation_queue) | [terra12qygrt6x3w5jpryae9lwhxpeamer7wz67hs3qq6ge79uc25f5c0quzzxud](https://finder.terra.money/mainnet/address/terra12qygrt6x3w5jpryae9lwhxpeamer7wz67hs3qq6ge79uc25f5c0quzzxud)| 
+| Custody LunaX | [`custody lunax`](./contracts/custody_cw20) | [terra1sdwg4774d0lj4xrfwp099ff38ljrpmncj6hpz27mkmk3cgkvl6kqcyam7l](https://finder.terra.money/mainnet/address/terra1sdwg4774d0lj4xrfwp099ff38ljrpmncj6hpz27mkmk3cgkvl6kqcyam7l)|
+| Custody ampLuna | [`custody lunax`](./contracts/custody_cw20) | [terra1wf40npm5kd6hv0vcha7tkv44yhk39sh8ym99q5p9tsr3759llnmsdcshpn](https://finder.terra.money/mainnet/address/terra1wf40npm5kd6hv0vcha7tkv44yhk39sh8ym99q5p9tsr3759llnmsdcshpn)|
+| Custody bLuna | [`custody lunax`](./contracts/custody_cw20) | [terra1mkren5cdvvp33n4tyqsychlu5r483ts40t4v7xkh9kqs86z8k99sktuw6z](https://finder.terra.money/mainnet/address/terra1mkren5cdvvp33n4tyqsychlu5r483ts40t4v7xkh9kqs86z8k99sktuw6z)| 
+| Collector | [`collector`]([./contracts/oracle](https://github.com/capapult-finance/capa-token/tree/main/contracts/collector)) | [terra17tgwprenh90vymcrrz2u8s2pfcks6cfk3vvncvk5yxtggeshrvds7wqzya](https://finder.terra.money/mainnet/address/terra17tgwprenh90vymcrrz2u8s2pfcks6cfk3vvncvk5yxtggeshrvds7wqzya)| 
+| Governance | [`governance`](https://github.com/capapult-finance/capa-token/tree/main/contracts/gov) | [terra1zch9ygn40r6g0y7aj85djaxnkcrhglsmqj5gfqxxl7srgfful26sskflup](https://finder.terra.money/mainnet/address/terra1zch9ygn40r6g0y7aj85djaxnkcrhglsmqj5gfqxxl7srgfful26sskflup)| 
+| Overseer | [`overseer`](./contracts/overseer) | [terra1vuau80hjjwnzr0z7hdeck47wey5cpev3hsmvn7nl9wq95n8d0tzscdyhdh](https://finder.terra.money/mainnet/address/terra1vuau80hjjwnzr0z7hdeck47wey5cpev3hsmvn7nl9wq95n8d0tzscdyhdh)| 
 
 ## Documentation
 
