@@ -1,9 +1,9 @@
+use cosmwasm_std::{Binary, Addr};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cw20::Cw20ReceiveMsg;
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct InstantiateMsg {
@@ -15,7 +15,10 @@ pub struct InstantiateMsg {
     pub base_borrow_fee: Decimal256,
     // Base fee increase factor
     pub fee_increase_factor: Decimal256,
+    // Base flash mint fee
+    pub fee_flash_mint:Decimal256
 }
+
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -50,6 +53,21 @@ pub enum ExecuteMsg {
         borrow_amount: Uint256,
         to: Option<String>,
     },
+
+    /// Require a flash mint specifying a callback msg that will be send back to the calling contract 
+    FlashMint {
+        amount:Uint256,
+        msg_callback:Binary
+    },
+
+    /// Private msg that burn the requested amount from the flash minter and send fee to the collector
+    PrivateFlashEnd {
+        flash_minter:String,
+        burn_amount:Uint256,
+        fee_amount:Uint256
+    }
+
+
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -109,4 +127,15 @@ pub struct BorrowerInfosResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct MigrateMsg {}
+pub struct MigrateMsg {
+    pub contract_addr: Addr,
+    pub owner_addr: Addr,
+    pub stable_contract: Addr,
+    pub overseer_contract: Addr,
+    pub collector_contract: Addr,
+    pub liquidation_contract: Addr,
+    pub oracle_contract: Addr,
+    pub base_borrow_fee: Decimal256,
+    pub fee_increase_factor: Decimal256,
+    pub flash_mint_fee: Decimal256
+}

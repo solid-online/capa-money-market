@@ -3,6 +3,7 @@ use cosmwasm_std::entry_point;
 
 use crate::borrow::{borrow_stable, query_borrower_info, query_borrower_infos, repay_stable};
 use crate::error::ContractError;
+use crate::flash_mint::{flash_mint, private_flash_end};
 use crate::response::MsgInstantiateContractResponse;
 use crate::state::{read_config, read_state, store_config, store_state, Config, State};
 
@@ -41,6 +42,7 @@ pub fn instantiate(
             oracle_contract: Addr::unchecked("".to_string()),
             base_borrow_fee: msg.base_borrow_fee,
             fee_increase_factor: msg.fee_increase_factor,
+            flash_mint_fee:msg.fee_flash_mint
         },
     )?;
 
@@ -127,6 +129,27 @@ pub fn execute(
                 info,
                 borrow_amount,
                 optional_addr_validate(api, to)?,
+            )
+        },
+
+        ExecuteMsg::FlashMint { amount, msg_callback } => {
+            flash_mint(
+                deps,
+                env,
+                info,
+                msg_callback,
+                amount
+            )
+        },
+
+        ExecuteMsg::PrivateFlashEnd {flash_minter, burn_amount, fee_amount } => {
+            private_flash_end(
+                deps,
+                env,
+                info,
+                flash_minter,
+                burn_amount,
+                fee_amount
             )
         }
     }
@@ -306,6 +329,22 @@ pub fn query_state(deps: Deps) -> StdResult<StateResponse> {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> StdResult<Response> {
+
+    let config = Config{
+        contract_addr: msg.contract_addr,
+        owner_addr: msg.owner_addr,
+        stable_contract: msg.stable_contract,
+        overseer_contract: msg.overseer_contract,
+        collector_contract: msg.collector_contract,
+        liquidation_contract: msg.liquidation_contract,
+        oracle_contract: msg.oracle_contract,
+        base_borrow_fee: msg.base_borrow_fee,
+        fee_increase_factor: msg.fee_increase_factor,
+        flash_mint_fee: msg.flash_mint_fee
+    };
+
+    store_config(deps.storage, &config)?;
+
     Ok(Response::default())
 }
