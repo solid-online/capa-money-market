@@ -104,6 +104,7 @@ pub struct ConfigResponse {
     pub collector_contract: String,
     pub liquidation_contract: String,
     pub oracle_contract: String,
+    pub flash_mint_fee: Decimal256
 }
 
 // We define a custom struct for each query response
@@ -128,7 +129,6 @@ pub struct BorrowerInfosResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct MigrateMsg {
-    pub contract_addr: Addr,
     pub owner_addr: Addr,
     pub stable_contract: Addr,
     pub overseer_contract: Addr,

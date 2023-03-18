@@ -1,5 +1,5 @@
 use crate::borrow::borrow_stable as _borrow_stable;
-use crate::contract::{execute, instantiate, query, reply, INITIAL_DEPOSIT_AMOUNT};
+use crate::contract::{execute, instantiate, query, reply, INITIAL_DEPOSIT_AMOUNT, migrate};
 use crate::error::ContractError;
 use crate::response::MsgInstantiateContractResponse;
 use crate::state::{read_borrower_infos, read_state, store_state, State};
@@ -13,7 +13,7 @@ use cosmwasm_std::{
 };
 use cw20::{Cw20Coin, Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 use moneymarket::market::{
-    BorrowerInfoResponse, ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg,
+    BorrowerInfoResponse, ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg, MigrateMsg,
     StateResponse,
 };
 use moneymarket::terraswap::InstantiateMsg as TokenInstantiateMsg;
@@ -1126,10 +1126,10 @@ fn repay_stable_from_liquidation() {
 #[test]
 fn flash_mint() {
 
-    let flash_loan_amount = Uint256::from_str("100000").unwrap();
-    let flash_loan_fee= Decimal256::from_str("0.00025").unwrap();
+    let flash_mint_amount = Uint256::from_str("100000").unwrap();
+    let flash_mint_fee= Decimal256::from_str("0.00025").unwrap();
 
-    let flash_loan_fee_amount = flash_loan_amount * flash_loan_fee;
+    let flash_mint_fee_amount = flash_mint_amount * flash_mint_fee;
 
     let mut deps = mock_dependencies(&vec![]);
 
@@ -1138,7 +1138,7 @@ fn flash_mint() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: flash_loan_fee
+        fee_flash_mint: flash_mint_fee
     };
 
     let info = mock_info("addr0000", &[]);
@@ -1158,7 +1158,7 @@ fn flash_mint() {
     };
     let _res = reply(deps.as_mut(), mock_env(), reply_msg).unwrap();
 
-    // Register overseer contract
+    // Register contracts
     let msg = ExecuteMsg::RegisterContracts {
         overseer_contract: "overseer".to_string(),
         collector_contract: "collector".to_string(),
@@ -1173,7 +1173,7 @@ fn flash_mint() {
     let info = mock_info("flash_minter", &[]);
 
     let msg = ExecuteMsg::FlashMint {
-        amount: flash_loan_amount,
+        amount: flash_mint_amount,
         msg_callback: to_binary("msg_callback").unwrap()
     };
 
@@ -1188,7 +1188,7 @@ fn flash_mint() {
         funds: vec![],
         msg: to_binary(&Cw20ExecuteMsg::Mint {
             recipient: String::from("flash_minter"),
-            amount: flash_loan_amount.into(),
+            amount: flash_mint_amount.into(),
         }).unwrap(),
     })));
 
@@ -1205,8 +1205,8 @@ fn flash_mint() {
         funds: vec![],
         msg: to_binary(&ExecuteMsg::PrivateFlashEnd {
             flash_minter: String::from("flash_minter"),
-            burn_amount: flash_loan_amount.into(),
-            fee_amount: flash_loan_fee_amount.into(),
+            burn_amount: flash_mint_amount.into(),
+            fee_amount: flash_mint_fee_amount.into(),
          }).unwrap(),
     })));
 
@@ -1215,8 +1215,8 @@ fn flash_mint() {
         vec![
             attr("action", "flash_mint"),
             attr("flash_minter", "flash_minter"),
-            attr("amount", flash_loan_amount),
-            attr("fee_amount", flash_loan_amount * flash_loan_fee)
+            attr("amount", flash_mint_amount),
+            attr("fee_amount", flash_mint_amount * flash_mint_fee)
         ]
     );
 
@@ -1233,8 +1233,8 @@ fn flash_mint() {
 
     let msg = ExecuteMsg::PrivateFlashEnd {
         flash_minter: String::from("random_address"),
-        burn_amount: flash_loan_amount.into(),
-        fee_amount: flash_loan_fee_amount.into(),
+        burn_amount: flash_mint_amount.into(),
+        fee_amount: flash_mint_fee_amount.into(),
     };
 
     let res = execute(deps.as_mut(), env.clone(), info, msg);
@@ -1249,8 +1249,8 @@ fn flash_mint() {
 
     let msg = ExecuteMsg::PrivateFlashEnd {
         flash_minter: String::from("flash_minter"),
-        burn_amount: flash_loan_amount.into(),
-        fee_amount: flash_loan_fee_amount.into(),
+        burn_amount: flash_mint_amount.into(),
+        fee_amount: flash_mint_fee_amount.into(),
     };
 
     let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -1264,19 +1264,19 @@ fn flash_mint() {
         funds: vec![],
         msg: to_binary(&Cw20ExecuteMsg::BurnFrom {
             owner: String::from("flash_minter"),
-            amount: flash_loan_amount.into()
+            amount: flash_mint_amount.into()
         }).unwrap(),
     })));
 
     // insert msg fee transfer to collector only if fee_amount > 0 (flash_mint_fee could be 0)
-    if flash_loan_fee_amount > Uint256::zero() {
+    if flash_mint_fee_amount > Uint256::zero() {
         messages.push(SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: String::from("solid"),
             funds: vec![],
             msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
                 owner: String::from("flash_minter"),
                 recipient: String::from("collector"),
-                amount: flash_loan_fee_amount.into()
+                amount: flash_mint_fee_amount.into()
 
             }).unwrap(),
         })));
@@ -1286,5 +1286,72 @@ fn flash_mint() {
         res.messages,
         messages
     );
+
+}
+
+#[test]
+fn migrate_contract(){
+
+    let flash_mint_fee= Decimal256::zero();
+
+    let mut deps = mock_dependencies(&vec![]);
+
+    let msg = InstantiateMsg {
+        owner_addr: "owner".to_string(),
+        stable_code_id: 123u64,
+        base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
+        fee_increase_factor: Decimal256::from_str("2").unwrap(),
+        fee_flash_mint: flash_mint_fee
+    };
+
+    let info = mock_info("addr0000", &[]);
+
+    // we can just call .unwrap() to assert this was a success
+    let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+    // Register solid token contract
+    let mut token_inst_res = MsgInstantiateContractResponse::new();
+    token_inst_res.set_contract_address("solid".to_string());
+    let reply_msg = Reply {
+        id: 1,
+        result: SubMsgResult::Ok(SubMsgResponse {
+            events: vec![],
+            data: Some(token_inst_res.write_to_bytes().unwrap().into()),
+        }),
+    };
+    let _res = reply(deps.as_mut(), mock_env(), reply_msg).unwrap();
+
+    // Register contracts
+    let msg = ExecuteMsg::RegisterContracts {
+        overseer_contract: "overseer".to_string(),
+        collector_contract: "collector".to_string(),
+        liquidation_contract: "liquidation".to_string(),
+        oracle_contract: "oracle".to_string(),
+    };
+    let env = mock_env();
+    let info = mock_info("owner", &[]);
+    let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+    // Migrate
+    let flash_mint_fee= Decimal256::from_str("0.00025").unwrap();
+
+    let msg = MigrateMsg {
+        owner_addr: Addr::unchecked("owner".to_string()),
+        stable_contract: Addr::unchecked("solid".to_string()),
+        overseer_contract: Addr::unchecked("overseer".to_string()),
+        collector_contract: Addr::unchecked("collector".to_string()),
+        liquidation_contract: Addr::unchecked("liquidation".to_string()),
+        oracle_contract: Addr::unchecked("oracle".to_string()),
+        base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
+        fee_increase_factor: Decimal256::from_str("2").unwrap(),
+        flash_mint_fee: flash_mint_fee,
+    };
+
+    let _res = migrate(deps.as_mut(), env.clone(), msg).unwrap();
+
+    let res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
+    let config_res: ConfigResponse = from_binary(&res).unwrap();
+
+    assert_eq!(config_res.flash_mint_fee, flash_mint_fee)
 
 }
