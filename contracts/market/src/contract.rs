@@ -42,7 +42,7 @@ pub fn instantiate(
             oracle_contract: Addr::unchecked("".to_string()),
             base_borrow_fee: msg.base_borrow_fee,
             fee_increase_factor: msg.fee_increase_factor,
-            flash_mint_fee:msg.fee_flash_mint
+            flash_mint_fee: msg.fee_flash_mint,
         },
     )?;
 
@@ -130,28 +130,18 @@ pub fn execute(
                 borrow_amount,
                 optional_addr_validate(api, to)?,
             )
-        },
-
-        ExecuteMsg::FlashMint { amount, msg_callback } => {
-            flash_mint(
-                deps,
-                env,
-                info,
-                msg_callback,
-                amount
-            )
-        },
-
-        ExecuteMsg::PrivateFlashEnd {flash_minter, burn_amount, fee_amount } => {
-            private_flash_end(
-                deps,
-                env,
-                info,
-                flash_minter,
-                burn_amount,
-                fee_amount
-            )
         }
+
+        ExecuteMsg::FlashMint {
+            amount,
+            msg_callback,
+        } => flash_mint(deps, env, info, msg_callback, amount),
+
+        ExecuteMsg::PrivateFlashEnd {
+            flash_minter,
+            burn_amount,
+            fee_amount,
+        } => private_flash_end(deps, env, info, flash_minter, burn_amount, fee_amount),
     }
 }
 
@@ -317,7 +307,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         collector_contract: config.collector_contract.to_string(),
         liquidation_contract: config.liquidation_contract.to_string(),
         oracle_contract: config.oracle_contract.to_string(),
-        flash_mint_fee: config.flash_mint_fee
+        flash_mint_fee: config.flash_mint_fee,
     })
 }
 
@@ -331,8 +321,7 @@ pub fn query_state(deps: Deps) -> StdResult<StateResponse> {
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
-
-    let config = Config{
+    let config = Config {
         contract_addr: env.contract.address,
         owner_addr: msg.owner_addr,
         stable_contract: msg.stable_contract,
@@ -342,7 +331,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
         oracle_contract: msg.oracle_contract,
         base_borrow_fee: msg.base_borrow_fee,
         fee_increase_factor: msg.fee_increase_factor,
-        flash_mint_fee: msg.flash_mint_fee
+        flash_mint_fee: msg.flash_mint_fee,
     };
 
     store_config(deps.storage, &config)?;

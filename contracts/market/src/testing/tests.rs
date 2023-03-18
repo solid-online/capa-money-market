@@ -1,5 +1,5 @@
 use crate::borrow::borrow_stable as _borrow_stable;
-use crate::contract::{execute, instantiate, query, reply, INITIAL_DEPOSIT_AMOUNT, migrate};
+use crate::contract::{execute, instantiate, migrate, query, reply, INITIAL_DEPOSIT_AMOUNT};
 use crate::error::ContractError;
 use crate::response::MsgInstantiateContractResponse;
 use crate::state::{read_borrower_infos, read_state, store_state, State};
@@ -13,8 +13,8 @@ use cosmwasm_std::{
 };
 use cw20::{Cw20Coin, Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 use moneymarket::market::{
-    BorrowerInfoResponse, ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg, MigrateMsg,
-    StateResponse,
+    BorrowerInfoResponse, ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg,
+    QueryMsg, StateResponse,
 };
 use moneymarket::terraswap::InstantiateMsg as TokenInstantiateMsg;
 use protobuf::Message;
@@ -34,7 +34,7 @@ fn proper_initialization() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.05").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: Decimal256::from_str("0.00025").unwrap()
+        fee_flash_mint: Decimal256::from_str("0.00025").unwrap(),
     };
 
     let info = mock_info(
@@ -158,8 +158,7 @@ fn update_config() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.05").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: Decimal256::from_str("0.00025").unwrap()
-
+        fee_flash_mint: Decimal256::from_str("0.00025").unwrap(),
     };
 
     let info = mock_info(
@@ -258,7 +257,7 @@ fn borrow_stable() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: Decimal256::from_str("0.00025").unwrap()
+        fee_flash_mint: Decimal256::from_str("0.00025").unwrap(),
     };
 
     let info = mock_info(
@@ -453,7 +452,7 @@ fn repay_stable() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: Decimal256::from_str("0.00025").unwrap()
+        fee_flash_mint: Decimal256::from_str("0.00025").unwrap(),
     };
 
     let info = mock_info(
@@ -818,7 +817,7 @@ fn repay_stable_from_liquidation() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: Decimal256::from_str("0.00025").unwrap()
+        fee_flash_mint: Decimal256::from_str("0.00025").unwrap(),
     };
 
     let info = mock_info("addr0000", &[]);
@@ -1125,9 +1124,8 @@ fn repay_stable_from_liquidation() {
 
 #[test]
 fn flash_mint() {
-
     let flash_mint_amount = Uint256::from_str("100000").unwrap();
-    let flash_mint_fee= Decimal256::from_str("0.00025").unwrap();
+    let flash_mint_fee = Decimal256::from_str("0.00025").unwrap();
 
     let flash_mint_fee_amount = flash_mint_amount * flash_mint_fee;
 
@@ -1138,7 +1136,7 @@ fn flash_mint() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: flash_mint_fee
+        fee_flash_mint: flash_mint_fee,
     };
 
     let info = mock_info("addr0000", &[]);
@@ -1174,13 +1172,13 @@ fn flash_mint() {
 
     let msg = ExecuteMsg::FlashMint {
         amount: flash_mint_amount,
-        msg_callback: to_binary("msg_callback").unwrap()
+        msg_callback: to_binary("msg_callback").unwrap(),
     };
 
     let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
     // Msgs that should be retrive
-    let mut messages:Vec<SubMsg> = vec![];
+    let mut messages: Vec<SubMsg> = vec![];
 
     // Insert mint msg
     messages.push(SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -1189,7 +1187,8 @@ fn flash_mint() {
         msg: to_binary(&Cw20ExecuteMsg::Mint {
             recipient: String::from("flash_minter"),
             amount: flash_mint_amount.into(),
-        }).unwrap(),
+        })
+        .unwrap(),
     })));
 
     // Insert callback msg
@@ -1207,7 +1206,8 @@ fn flash_mint() {
             flash_minter: String::from("flash_minter"),
             burn_amount: flash_mint_amount.into(),
             fee_amount: flash_mint_fee_amount.into(),
-         }).unwrap(),
+        })
+        .unwrap(),
     })));
 
     assert_eq!(
@@ -1220,10 +1220,7 @@ fn flash_mint() {
         ]
     );
 
-    assert_eq!(
-        res.messages,
-        messages
-    );
+    assert_eq!(res.messages, messages);
 
     // Call private flash end
 
@@ -1254,9 +1251,9 @@ fn flash_mint() {
     };
 
     let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
-    
+
     // Msgs that should be retrive
-    let mut messages:Vec<SubMsg> = vec![];
+    let mut messages: Vec<SubMsg> = vec![];
 
     // insert msg burn
     messages.push(SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -1264,8 +1261,9 @@ fn flash_mint() {
         funds: vec![],
         msg: to_binary(&Cw20ExecuteMsg::BurnFrom {
             owner: String::from("flash_minter"),
-            amount: flash_mint_amount.into()
-        }).unwrap(),
+            amount: flash_mint_amount.into(),
+        })
+        .unwrap(),
     })));
 
     // insert msg fee transfer to collector only if fee_amount > 0 (flash_mint_fee could be 0)
@@ -1276,23 +1274,18 @@ fn flash_mint() {
             msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
                 owner: String::from("flash_minter"),
                 recipient: String::from("collector"),
-                amount: flash_mint_fee_amount.into()
-
-            }).unwrap(),
+                amount: flash_mint_fee_amount.into(),
+            })
+            .unwrap(),
         })));
     }
 
-    assert_eq!(
-        res.messages,
-        messages
-    );
-
+    assert_eq!(res.messages, messages);
 }
 
 #[test]
-fn migrate_contract(){
-
-    let flash_mint_fee= Decimal256::zero();
+fn migrate_contract() {
+    let flash_mint_fee = Decimal256::zero();
 
     let mut deps = mock_dependencies(&vec![]);
 
@@ -1301,7 +1294,7 @@ fn migrate_contract(){
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: flash_mint_fee
+        fee_flash_mint: flash_mint_fee,
     };
 
     let info = mock_info("addr0000", &[]);
@@ -1333,7 +1326,7 @@ fn migrate_contract(){
     let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
     // Migrate
-    let flash_mint_fee= Decimal256::from_str("0.00025").unwrap();
+    let flash_mint_fee = Decimal256::from_str("0.00025").unwrap();
 
     let msg = MigrateMsg {
         owner_addr: Addr::unchecked("owner".to_string()),
@@ -1353,5 +1346,4 @@ fn migrate_contract(){
     let config_res: ConfigResponse = from_binary(&res).unwrap();
 
     assert_eq!(config_res.flash_mint_fee, flash_mint_fee)
-
 }
