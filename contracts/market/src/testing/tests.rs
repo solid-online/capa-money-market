@@ -1129,7 +1129,7 @@ fn flash_mint() {
 
     let flash_mint_fee_amount = flash_mint_amount * flash_mint_fee;
 
-    let mut deps = mock_dependencies(&vec![]);
+    let mut deps = mock_dependencies(&[]);
 
     let msg = InstantiateMsg {
         owner_addr: "owner".to_string(),
@@ -1178,37 +1178,32 @@ fn flash_mint() {
     let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
     // Msgs that should be retrive
-    let mut messages: Vec<SubMsg> = vec![];
-
-    // Insert mint msg
-    messages.push(SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: String::from("solid"),
-        funds: vec![],
-        msg: to_binary(&Cw20ExecuteMsg::Mint {
-            recipient: String::from("flash_minter"),
-            amount: flash_mint_amount.into(),
-        })
-        .unwrap(),
-    })));
-
-    // Insert callback msg
-    messages.push(SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: String::from("flash_minter"),
-        funds: vec![],
-        msg: to_binary("msg_callback").unwrap(),
-    })));
-
-    // Insert private flahs end msg
-    messages.push(SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: env.contract.address.to_string(),
-        funds: vec![],
-        msg: to_binary(&ExecuteMsg::PrivateFlashEnd {
-            flash_minter: String::from("flash_minter"),
-            burn_amount: flash_mint_amount.into(),
-            fee_amount: flash_mint_fee_amount.into(),
-        })
-        .unwrap(),
-    })));
+    let messages: Vec<SubMsg> = vec![
+        SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: String::from("solid"),
+            funds: vec![],
+            msg: to_binary(&Cw20ExecuteMsg::Mint {
+                recipient: String::from("flash_minter"),
+                amount: flash_mint_amount.into(),
+            })
+            .unwrap(),
+        })),
+        SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: String::from("flash_minter"),
+            funds: vec![],
+            msg: to_binary("msg_callback").unwrap(),
+        })),
+        SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: env.contract.address.to_string(),
+            funds: vec![],
+            msg: to_binary(&ExecuteMsg::PrivateFlashEnd {
+                flash_minter: String::from("flash_minter"),
+                burn_amount: flash_mint_amount,
+                fee_amount: flash_mint_fee_amount,
+            })
+            .unwrap(),
+        })),
+    ];
 
     assert_eq!(
         res.attributes,
@@ -1230,8 +1225,8 @@ fn flash_mint() {
 
     let msg = ExecuteMsg::PrivateFlashEnd {
         flash_minter: String::from("random_address"),
-        burn_amount: flash_mint_amount.into(),
-        fee_amount: flash_mint_fee_amount.into(),
+        burn_amount: flash_mint_amount,
+        fee_amount: flash_mint_fee_amount,
     };
 
     let res = execute(deps.as_mut(), env.clone(), info, msg);
@@ -1246,11 +1241,11 @@ fn flash_mint() {
 
     let msg = ExecuteMsg::PrivateFlashEnd {
         flash_minter: String::from("flash_minter"),
-        burn_amount: flash_mint_amount.into(),
-        fee_amount: flash_mint_fee_amount.into(),
+        burn_amount: flash_mint_amount,
+        fee_amount: flash_mint_fee_amount,
     };
 
-    let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+    let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
     // Msgs that should be retrive
     let mut messages: Vec<SubMsg> = vec![];
@@ -1287,7 +1282,7 @@ fn flash_mint() {
 fn migrate_contract() {
     let flash_mint_fee = Decimal256::zero();
 
-    let mut deps = mock_dependencies(&vec![]);
+    let mut deps = mock_dependencies(&[]);
 
     let msg = InstantiateMsg {
         owner_addr: "owner".to_string(),
@@ -1337,10 +1332,10 @@ fn migrate_contract() {
         oracle_contract: Addr::unchecked("oracle".to_string()),
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        flash_mint_fee: flash_mint_fee,
+        flash_mint_fee,
     };
 
-    let _res = migrate(deps.as_mut(), env.clone(), msg).unwrap();
+    let _res = migrate(deps.as_mut(), env, msg).unwrap();
 
     let res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
     let config_res: ConfigResponse = from_binary(&res).unwrap();
