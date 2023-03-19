@@ -42,7 +42,7 @@ pub fn instantiate(
             oracle_contract: Addr::unchecked("".to_string()),
             base_borrow_fee: msg.base_borrow_fee,
             fee_increase_factor: msg.fee_increase_factor,
-            flash_mint_fee: msg.fee_flash_mint,
+            fee_flash_mint: msg.fee_flash_mint,
         },
     )?;
 
@@ -120,6 +120,10 @@ pub fn execute(
                 base_borrow_fee,
                 fee_increase_factor,
             )
+        }
+
+        ExecuteMsg::UpdateFeeFlashMint { fee_flash_mint } => {
+            update_fee_flash_mint(deps, info, fee_flash_mint)
         }
         ExecuteMsg::BorrowStable { borrow_amount, to } => {
             let api = deps.api;
@@ -281,6 +285,24 @@ pub fn update_config(
     Ok(Response::new().add_attributes(vec![attr("action", "update_config")]))
 }
 
+pub fn update_fee_flash_mint(
+    deps: DepsMut,
+    info: MessageInfo,
+    fee_flash_mint: Decimal256,
+) -> Result<Response, ContractError> {
+    let mut config: Config = read_config(deps.storage)?;
+
+    // permission check
+    if info.sender != config.owner_addr {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    config.fee_flash_mint = Some(fee_flash_mint);
+
+    store_config(deps.storage, &config)?;
+    Ok(Response::new().add_attributes(vec![attr("action", "update_config")]))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -307,7 +329,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         collector_contract: config.collector_contract.to_string(),
         liquidation_contract: config.liquidation_contract.to_string(),
         oracle_contract: config.oracle_contract.to_string(),
-        flash_mint_fee: config.flash_mint_fee,
+        flash_mint_fee: config.fee_flash_mint,
     })
 }
 
@@ -320,21 +342,6 @@ pub fn query_state(deps: Deps) -> StdResult<StateResponse> {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
-    let config = Config {
-        contract_addr: env.contract.address,
-        owner_addr: msg.owner_addr,
-        stable_contract: msg.stable_contract,
-        overseer_contract: msg.overseer_contract,
-        collector_contract: msg.collector_contract,
-        liquidation_contract: msg.liquidation_contract,
-        oracle_contract: msg.oracle_contract,
-        base_borrow_fee: msg.base_borrow_fee,
-        fee_increase_factor: msg.fee_increase_factor,
-        flash_mint_fee: msg.flash_mint_fee,
-    };
-
-    store_config(deps.storage, &config)?;
-
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default())
 }

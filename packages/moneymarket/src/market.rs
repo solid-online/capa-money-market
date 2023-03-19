@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Binary};
+use cosmwasm_std::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +16,7 @@ pub struct InstantiateMsg {
     // Base fee increase factor
     pub fee_increase_factor: Decimal256,
     // Base flash mint fee
-    pub fee_flash_mint: Decimal256,
+    pub fee_flash_mint: Option<Decimal256>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -45,6 +45,11 @@ pub enum ExecuteMsg {
         liquidation_contract: Option<String>,
         base_borrow_fee: Option<Decimal256>,
         fee_increase_factor: Option<Decimal256>,
+    },
+
+    /// Update config values
+    UpdateFeeFlashMint {
+        fee_flash_mint: Decimal256,
     },
 
     /// Borrow stable asset with collaterals in overseer contract
@@ -101,7 +106,7 @@ pub struct ConfigResponse {
     pub collector_contract: String,
     pub liquidation_contract: String,
     pub oracle_contract: String,
-    pub flash_mint_fee: Decimal256,
+    pub flash_mint_fee: Option<Decimal256>,
 }
 
 // We define a custom struct for each query response
@@ -125,14 +130,4 @@ pub struct BorrowerInfosResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct MigrateMsg {
-    pub owner_addr: Addr,
-    pub stable_contract: Addr,
-    pub overseer_contract: Addr,
-    pub collector_contract: Addr,
-    pub liquidation_contract: Addr,
-    pub oracle_contract: Addr,
-    pub base_borrow_fee: Decimal256,
-    pub fee_increase_factor: Decimal256,
-    pub flash_mint_fee: Decimal256,
-}
+pub struct MigrateMsg {}

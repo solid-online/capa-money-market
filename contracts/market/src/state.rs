@@ -23,7 +23,7 @@ pub struct Config {
     pub oracle_contract: Addr,
     pub base_borrow_fee: Decimal256,
     pub fee_increase_factor: Decimal256,
-    pub flash_mint_fee: Decimal256,
+    pub fee_flash_mint: Option<Decimal256>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
