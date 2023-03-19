@@ -16,7 +16,7 @@ pub struct InstantiateMsg {
     // Base fee increase factor
     pub fee_increase_factor: Decimal256,
     // Base flash mint fee
-    pub fee_flash_mint: Option<Decimal256>,
+    pub flash_mint_fee: Option<Decimal256>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -45,11 +45,7 @@ pub enum ExecuteMsg {
         liquidation_contract: Option<String>,
         base_borrow_fee: Option<Decimal256>,
         fee_increase_factor: Option<Decimal256>,
-    },
-
-    /// Update config values
-    UpdateFeeFlashMint {
-        fee_flash_mint: Decimal256,
+        flash_mint_fee: Option<Decimal256>,
     },
 
     /// Borrow stable asset with collaterals in overseer contract

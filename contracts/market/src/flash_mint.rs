@@ -7,7 +7,7 @@ use moneymarket::market::ExecuteMsg;
 
 use crate::{error::ContractError, state::read_config};
 
-const DEFAULT_FEE_FLASH_MINT: Decimal256 = Decimal256::zero();
+const DEFAULT_FLASH_MINT_FEE: Decimal256 = Decimal256::zero();
 
 pub fn flash_mint(
     deps: DepsMut,
@@ -20,8 +20,8 @@ pub fn flash_mint(
     let config = read_config(deps.storage)?;
 
     // Compute fee amount
-    let fee_flash_mint = config.fee_flash_mint.unwrap_or(DEFAULT_FEE_FLASH_MINT);
-    let fee_amount = fee_flash_mint * amount;
+    let flash_mint_fee = config.flash_mint_fee.unwrap_or(DEFAULT_FLASH_MINT_FEE);
+    let fee_amount = flash_mint_fee * amount;
 
     let messages: Vec<CosmosMsg> = vec![
         // Mint

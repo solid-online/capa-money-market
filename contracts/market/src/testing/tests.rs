@@ -34,7 +34,7 @@ fn proper_initialization() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.05").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: Some(Decimal256::from_str("0.00025").unwrap()),
+        flash_mint_fee: Some(Decimal256::from_str("0.00025").unwrap()),
     };
 
     let info = mock_info(
@@ -158,7 +158,7 @@ fn update_config() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.05").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: Some(Decimal256::from_str("0.00025").unwrap()),
+        flash_mint_fee: Some(Decimal256::from_str("0.00025").unwrap()),
     };
 
     let info = mock_info(
@@ -201,6 +201,7 @@ fn update_config() {
         liquidation_contract: None,
         base_borrow_fee: Some(Decimal256::from_str("0.006").unwrap()),
         fee_increase_factor: Some(Decimal256::from_str("2").unwrap()),
+        flash_mint_fee: None,
     };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -218,6 +219,7 @@ fn update_config() {
         liquidation_contract: Some("liquidation2".to_string()),
         base_borrow_fee: None,
         fee_increase_factor: None,
+        flash_mint_fee: None,
     };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -236,6 +238,7 @@ fn update_config() {
         liquidation_contract: None,
         base_borrow_fee: None,
         fee_increase_factor: None,
+        flash_mint_fee: None,
     };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg);
@@ -257,7 +260,7 @@ fn borrow_stable() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: Some(Decimal256::from_str("0.00025").unwrap()),
+        flash_mint_fee: Some(Decimal256::from_str("0.00025").unwrap()),
     };
 
     let info = mock_info(
@@ -452,7 +455,7 @@ fn repay_stable() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: Some(Decimal256::from_str("0.00025").unwrap()),
+        flash_mint_fee: Some(Decimal256::from_str("0.00025").unwrap()),
     };
 
     let info = mock_info(
@@ -817,7 +820,7 @@ fn repay_stable_from_liquidation() {
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: Some(Decimal256::from_str("0.00025").unwrap()),
+        flash_mint_fee: Some(Decimal256::from_str("0.00025").unwrap()),
     };
 
     let info = mock_info("addr0000", &[]);
@@ -1125,19 +1128,19 @@ fn repay_stable_from_liquidation() {
 #[test]
 fn flash_mint() {
     let amount_flash_mint = Uint256::from_str("100000").unwrap();
-    let fee_flash_mint = Decimal256::from_str("0.00025").unwrap();
+    let flash_mint_fee = Decimal256::from_str("0.00025").unwrap();
 
-    let flash_mint_fee_amount = amount_flash_mint * fee_flash_mint;
+    let flash_mint_fee_amount = amount_flash_mint * flash_mint_fee;
 
     let mut deps = mock_dependencies(&[]);
 
-    // Instantiate the contract without the fee_flash_mint
+    // Instantiate the contract without the flash_mint_fee
     let msg = InstantiateMsg {
         owner_addr: "owner".to_string(),
         stable_code_id: 123u64,
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
-        fee_flash_mint: None,
+        flash_mint_fee: None,
     };
 
     let info = mock_info("addr0000", &[]);
@@ -1168,8 +1171,14 @@ fn flash_mint() {
     let info = mock_info("owner", &[]);
     let _res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
-    // Update fee_flash_mint
-    let msg = ExecuteMsg::UpdateFeeFlashMint { fee_flash_mint };
+    // Update flash_mint_fee
+    let msg = ExecuteMsg::UpdateConfig {
+        owner_addr: None,
+        liquidation_contract: None,
+        base_borrow_fee: None,
+        fee_increase_factor: None,
+        flash_mint_fee: Some(flash_mint_fee),
+    };
     let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
     // Now the fee are updated so the test will use the new updated fee value to assert
@@ -1218,7 +1227,7 @@ fn flash_mint() {
             attr("action", "flash_mint"),
             attr("flash_minter", "flash_minter"),
             attr("amount", amount_flash_mint),
-            attr("fee_amount", amount_flash_mint * fee_flash_mint)
+            attr("fee_amount", amount_flash_mint * flash_mint_fee)
         ]
     );
 
