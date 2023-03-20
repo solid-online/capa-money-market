@@ -1,9 +1,9 @@
+use cosmwasm_std::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cw20::Cw20ReceiveMsg;
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct InstantiateMsg {
@@ -15,6 +15,8 @@ pub struct InstantiateMsg {
     pub base_borrow_fee: Decimal256,
     // Base fee increase factor
     pub fee_increase_factor: Decimal256,
+    // Base flash mint fee
+    pub flash_mint_fee: Option<Decimal256>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -43,12 +45,26 @@ pub enum ExecuteMsg {
         liquidation_contract: Option<String>,
         base_borrow_fee: Option<Decimal256>,
         fee_increase_factor: Option<Decimal256>,
+        flash_mint_fee: Option<Decimal256>,
     },
 
     /// Borrow stable asset with collaterals in overseer contract
     BorrowStable {
         borrow_amount: Uint256,
         to: Option<String>,
+    },
+
+    /// Require a flash mint specifying a callback msg that will be send back to the calling contract
+    FlashMint {
+        amount: Uint256,
+        msg_callback: Binary,
+    },
+
+    /// Private msg that burn the requested amount from the flash minter and send fee to the collector
+    PrivateFlashEnd {
+        flash_minter: String,
+        burn_amount: Uint256,
+        fee_amount: Uint256,
     },
 }
 
@@ -86,6 +102,7 @@ pub struct ConfigResponse {
     pub collector_contract: String,
     pub liquidation_contract: String,
     pub oracle_contract: String,
+    pub flash_mint_fee: Option<Decimal256>,
 }
 
 // We define a custom struct for each query response

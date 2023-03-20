@@ -3,6 +3,7 @@ use cosmwasm_std::entry_point;
 
 use crate::borrow::{borrow_stable, query_borrower_info, query_borrower_infos, repay_stable};
 use crate::error::ContractError;
+use crate::flash_mint::{flash_mint, private_flash_end};
 use crate::response::MsgInstantiateContractResponse;
 use crate::state::{read_config, read_state, store_config, store_state, Config, State};
 
@@ -41,6 +42,7 @@ pub fn instantiate(
             oracle_contract: Addr::unchecked("".to_string()),
             base_borrow_fee: msg.base_borrow_fee,
             fee_increase_factor: msg.fee_increase_factor,
+            flash_mint_fee: msg.flash_mint_fee,
         },
     )?;
 
@@ -108,6 +110,7 @@ pub fn execute(
             liquidation_contract,
             base_borrow_fee,
             fee_increase_factor,
+            flash_mint_fee,
         } => {
             let api = deps.api;
             update_config(
@@ -117,8 +120,10 @@ pub fn execute(
                 optional_addr_validate(api, liquidation_contract)?,
                 base_borrow_fee,
                 fee_increase_factor,
+                flash_mint_fee,
             )
         }
+
         ExecuteMsg::BorrowStable { borrow_amount, to } => {
             let api = deps.api;
             borrow_stable(
@@ -129,6 +134,17 @@ pub fn execute(
                 optional_addr_validate(api, to)?,
             )
         }
+
+        ExecuteMsg::FlashMint {
+            amount,
+            msg_callback,
+        } => flash_mint(deps, env, info, msg_callback, amount),
+
+        ExecuteMsg::PrivateFlashEnd {
+            flash_minter,
+            burn_amount,
+            fee_amount,
+        } => private_flash_end(deps, env, info, flash_minter, burn_amount, fee_amount),
     }
 }
 
@@ -238,6 +254,7 @@ pub fn update_config(
     liquidation_contract: Option<Addr>,
     base_borrow_fee: Option<Decimal256>,
     fee_increase_factor: Option<Decimal256>,
+    flash_mint_fee: Option<Decimal256>,
 ) -> Result<Response, ContractError> {
     let mut config: Config = read_config(deps.storage)?;
 
@@ -262,6 +279,12 @@ pub fn update_config(
 
     if let Some(fee_increase_factor) = fee_increase_factor {
         config.fee_increase_factor = fee_increase_factor
+    }
+
+    if let Some(flash_mint_fee) = flash_mint_fee {
+        if flash_mint_fee < Decimal256::one() {
+            config.flash_mint_fee = Some(flash_mint_fee)
+        }
     }
 
     store_config(deps.storage, &config)?;
@@ -294,6 +317,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         collector_contract: config.collector_contract.to_string(),
         liquidation_contract: config.liquidation_contract.to_string(),
         oracle_contract: config.oracle_contract.to_string(),
+        flash_mint_fee: config.flash_mint_fee,
     })
 }
 
