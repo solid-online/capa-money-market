@@ -1,4 +1,4 @@
-use cosmwasm_std::{Decimal, Uint128};
+use cosmwasm_std::Uint128;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -15,8 +15,6 @@ pub struct InstantiateMsg {
     pub collateral_denom: String,
 
     pub wrapper_denom: String,
-    // oracle at the start
-    pub staking_contract: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -27,7 +25,6 @@ pub enum ExecuteMsg {
     /// Update config values
     UpdateConfig {
         owner_addr: Option<String>,
-        staking_addr: Option<String>,
     },
 
     /// Deposit collateral IBC token and get the wrapper
@@ -64,7 +61,6 @@ pub struct ConfigResponse {
 pub struct StateResponse {
     pub total_bond: Uint128,
     pub total_supply: Uint128,
-    pub exchange_rate: Decimal,
 }
 
 // We define a custom struct for each query response

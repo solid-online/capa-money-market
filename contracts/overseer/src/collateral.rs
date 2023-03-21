@@ -229,7 +229,7 @@ pub(crate) fn compute_borrow_limit(
             deps,
             config.oracle_contract.clone(),
             (deps.api.addr_validate(collateral_token.as_str())?).to_string(),
-            (deps.api.addr_validate(config.stable_contract.as_str())?).to_string(),
+            "uusd".to_string(),
             block_time.map(|block_time| TimeConstraints {
                 block_time,
                 valid_timeframe: config.price_timeframe,
