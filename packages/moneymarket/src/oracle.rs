@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_bignumber::math::Decimal256;
 
+use cosmwasm_std::{Addr, Binary};
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InstantiateMsg {
     pub owner: String,
@@ -15,17 +17,19 @@ pub enum ExecuteMsg {
     UpdateConfig {
         owner: Option<String>,
     },
-    RegisterFeeder {
-        asset: String,
-        feeder: String,
-    },
+
     FeedPrice {
         prices: Vec<(String, Decimal256)>, // (asset, price)
     },
 
     UpdateFeeder {
         asset: String,
-        feeder: String,
+        feeder: Addr,
+    },
+
+    RegisterAsset {
+        asset: String,
+        source: PriceSource,
     },
 }
 
@@ -43,6 +47,24 @@ pub enum QueryMsg {
     Prices {
         start_after: Option<String>,
         limit: Option<u32>,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[allow(unreachable_patterns)]
+pub enum PriceSource {
+    Feeder {
+        feeder: Addr,
+        price: Option<Decimal256>,
+        last_updated_time: Option<u64>,
+    },
+    LsdContractQuery {
+        base_asset: String,
+        contract: Addr,
+        query_msg: Binary,
+        path_key: Vec<String>,
+        is_inverted: bool,
     },
 }
 

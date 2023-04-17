@@ -20,4 +20,13 @@ pub enum ContractError {
 
     #[error("Zero Price is not allowed")]
     NotValidZeroPrice {},
+
+    #[error("Price source is not feeder for asset {asset:?}")]
+    SourceIsNotFeeder { asset: String },
+
+    #[error("Price has never been feeded")]
+    PriceNeverFeeded {},
+
+    #[error("Asset is Lsd")]
+    AssetIsLsd {},
 }

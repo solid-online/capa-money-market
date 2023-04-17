@@ -3,4 +3,4 @@ pub mod error;
 pub mod state;
 
 #[cfg(test)]
-mod tests;
+mod testing;
