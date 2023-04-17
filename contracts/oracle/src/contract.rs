@@ -1,22 +1,28 @@
 use serde_json::Value;
-use std::cmp::{min};
+use std::cmp::min;
 use std::convert::TryFrom;
 use std::str::FromStr;
 
 use crate::error::ContractError;
 use crate::state::{Config, PriceInfo, ASSETS, CONFIG};
-use cosmwasm_bignumber::math::Decimal256;
+use cosmwasm_bignumber::math::{Decimal256, Uint256};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_binary, Addr, Attribute, Binary, Deps, DepsMut, Env, MessageInfo, Order, QueryRequest,
-    Response, StdResult, WasmQuery,
+    attr, to_binary, Addr, Attribute, Binary, Deps, DepsMut, Env, Isqrt, MessageInfo, Order,
+    QueryRequest, Response, StdResult, Uint128, Uint256 as StdUint256, WasmQuery,
 };
+
 use cw_storage_plus::Bound;
 use moneymarket::oracle::{
     ConfigResponse, ExecuteMsg, FeederResponse, InstantiateMsg, PriceResponse, PriceSource,
-    PricesResponse, PricesResponseElem, QueryMsg,
+    PricesResponse, PricesResponseElem, QueryMsg, RegisterPriceSource,
 };
+
+use astroport::asset::{AssetInfo, PairInfo};
+use astroport::generator::QueryMsg as GeneratorQueryMsg;
+use astroport::pair::{PoolResponse, QueryMsg as PairQueryMsg};
+use astroport::querier::query_supply as cw20_query_supply;
 
 // settings for pagination
 const MAX_LIMIT: u32 = 10;
@@ -48,7 +54,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::RegisterAsset { asset, source } => register_asset(deps, info, asset, source),
+        ExecuteMsg::RegisterAsset { asset, source } => register_asset(deps, env, info, asset, source),
         ExecuteMsg::UpdateConfig { owner } => update_config(deps, info, owner),
         ExecuteMsg::UpdateFeeder { asset, feeder } => update_feeder(deps, info, asset, feeder),
         ExecuteMsg::FeedPrice { prices } => feed_prices(deps, env, info, prices),
@@ -75,9 +81,10 @@ pub fn update_config(
 
 pub fn register_asset(
     deps: DepsMut,
+    env:Env,
     info: MessageInfo,
     asset: String,
-    source: PriceSource,
+    source: RegisterPriceSource,
 ) -> Result<Response, ContractError> {
     let config: Config = CONFIG.load(deps.storage)?;
     if info.sender != config.owner {
@@ -90,8 +97,8 @@ pub fn register_asset(
 
     let mut attributes: Vec<Attribute> = vec![];
 
-    match source.clone() {
-        PriceSource::Feeder { feeder, .. } => {
+    match source {
+        RegisterPriceSource::Feeder { feeder } => {
             ASSETS.save(
                 deps.storage,
                 asset,
@@ -105,14 +112,54 @@ pub fn register_asset(
             attributes.push(attr("source_type", "feeder"));
             attributes.push(attr("feeder", feeder));
         }
-        PriceSource::LsdContractQuery { contract, base_asset, .. } => {
+        RegisterPriceSource::LsdContractQuery {
+            contract,
+            base_asset,
+            query_msg,
+            path_key,
+            is_inverted,
+        } => {
+            assert_asset_is_not_lsd(deps.as_ref(), base_asset.clone())?;
 
-            assert_asset_is_not_lsd(deps.as_ref(), base_asset)?;
-
-            ASSETS.save(deps.storage, asset, &source)?;
+            ASSETS.save(
+                deps.storage,
+                asset,
+                &PriceSource::LsdContractQuery {
+                    base_asset,
+                    contract: contract.clone(),
+                    query_msg,
+                    path_key,
+                    is_inverted,
+                },
+            )?;
 
             attributes.push(attr("source_type", "lsd_contract_query"));
             attributes.push(attr("contract", contract));
+        }
+        RegisterPriceSource::AstroportLpAutocompound {
+            vault_contract,
+            generator_contract,
+            pool_contract,
+        } => {
+            
+            deps.api.addr_validate(&asset)?;
+
+            let (assets, lp_contract) = pool_infos(deps.as_ref(), pool_contract.clone())?;
+
+            // Before save it try to fetch the price to check if the variable passed are ok
+            astroport_lp_autocompound_price(deps.as_ref(), env, asset.clone(), vault_contract.clone(), generator_contract.clone(), pool_contract.clone(), lp_contract.clone())?;
+
+            ASSETS.save(
+                deps.storage,
+                asset,
+                &PriceSource::AstroportLpAutocompound {
+                    vault_contract,
+                    generator_contract,
+                    pool_contract,
+                    lp_contract,
+                    assets,
+                },
+            )?;
         }
     }
 
@@ -155,7 +202,7 @@ pub fn update_feeder(
                 _ => return Err(ContractError::SourceIsNotFeeder { asset }),
             }
         }
-        Err(_) => return Err(ContractError::AssetIsNotWhitelisted {}),
+        Err(_) => return Err(ContractError::AssetIsNotWhitelisted { asset }),
     }
 
     Ok(Response::new().add_attributes(vec![
@@ -202,7 +249,7 @@ pub fn feed_prices(
                 #[allow(unreachable_patterns)]
                 _ => return Err(ContractError::SourceIsNotFeeder { asset }),
             },
-            Err(_) => return Err(ContractError::AssetIsNotWhitelisted {}),
+            Err(_) => return Err(ContractError::AssetIsNotWhitelisted { asset }),
         }
     }
 
@@ -298,8 +345,10 @@ fn query_prices(
     Ok(PricesResponse { prices })
 }
 
+// --- FUNCTIONS ---
+
 fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, ContractError> {
-    match ASSETS.load(deps.storage, asset) {
+    match ASSETS.load(deps.storage, asset.clone()) {
         Ok(source) => match source {
             PriceSource::Feeder {
                 price,
@@ -331,7 +380,7 @@ fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, ContractE
 
                 let mut value = &res;
 
-                for  key in path_key {
+                for key in path_key {
                     value = &value[key];
                 }
 
@@ -348,25 +397,152 @@ fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, ContractE
                     last_updated_time: base_asset_price_info.last_updated_time,
                 })
             }
+
+            PriceSource::AstroportLpAutocompound {
+                vault_contract,
+                generator_contract,
+                pool_contract,
+                lp_contract,
+                ..
+            } => astroport_lp_autocompound_price(
+                deps,
+                env,
+                asset,
+                vault_contract,
+                generator_contract,
+                pool_contract,
+                lp_contract,
+            ),
         },
 
-        Err(_) => Err(ContractError::AssetIsNotWhitelisted {}),
+        Err(_) => Err(ContractError::AssetIsNotWhitelisted { asset }),
     }
 }
 
-fn assert_asset_is_not_lsd (deps: Deps, asset:String) -> Result<(), ContractError> {
-
-    match ASSETS.load(deps.storage, asset) {
+fn assert_asset_is_not_lsd(deps: Deps, asset: String) -> Result<(), ContractError> {
+    match ASSETS.load(deps.storage, asset.clone()) {
         Ok(source) => match source {
+            PriceSource::LsdContractQuery { .. } => Err(ContractError::AssetIsLsd {}),
 
-            PriceSource::LsdContractQuery {..} => {
-                return Err(ContractError::AssetIsLsd {})
-
-            }
-
-            _ => return Ok(())
+            _ => Ok(()),
         },
 
-        Err(_) => Err(ContractError::AssetIsNotWhitelisted {}),
+        Err(_) => Err(ContractError::AssetIsNotWhitelisted { asset }),
     }
+}
+
+/// Return:
+/// - `Vec<String>`: vec of asset contract;
+/// - `Addr`: Address of lp token
+fn pool_infos(deps: Deps, pool_contract: Addr) -> Result<(Vec<String>, Addr), ContractError> {
+    let res: PairInfo = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: pool_contract.to_string(),
+        msg: to_binary(&PairQueryMsg::Pair {})?,
+    }))?;
+
+    let vec_contract_address: Vec<String> = res
+        .asset_infos
+        .iter()
+        .map(|info| -> String {
+            match info {
+                AssetInfo::Token { contract_addr } => contract_addr.to_string(),
+                AssetInfo::NativeToken { denom } => denom.to_string(),
+            }
+        })
+        .collect();
+
+    Ok((vec_contract_address, res.liquidity_token))
+}
+
+/// Return:
+/// - `Vec<(String, Uint256)>`: vec of (asset contract, amount);
+fn pool_tokens_amount_and_price(
+    deps: Deps,
+    env: Env,
+    pool_contract: Addr,
+) -> Result<Vec<(Uint256, PriceInfo)>, ContractError> {
+    let res: PoolResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: pool_contract.to_string(),
+        msg: to_binary(&PairQueryMsg::Pool {})?,
+    }))?;
+
+    let vec_address_amount: Result<Vec<(Uint256, PriceInfo)>, ContractError> = res
+        .assets
+        .iter()
+        .map(|asset| -> Result<(Uint256, PriceInfo), ContractError> {
+            match asset.info.clone() {
+                AssetInfo::Token { contract_addr } => Ok((
+                    Uint256::from(asset.amount),
+                    get_price(deps, env.clone(), contract_addr.to_string())?,
+                )),
+                AssetInfo::NativeToken { denom } => Ok((
+                    Uint256::from(asset.amount),
+                    get_price(deps, env.clone(), denom)?,
+                )),
+            }
+        })
+        .collect();
+
+    vec_address_amount
+}
+
+fn astroport_lp_autocompound_price(
+    deps: Deps,
+    env: Env,
+    clp_contract: String,
+    vault_contract: Addr,
+    generator_contract: Addr,
+    pool_contract: Addr,
+    lp_contract: Addr,
+) -> Result<PriceInfo, ContractError> {
+    let lp_supply = Uint256::from(cw20_query_supply(&deps.querier, lp_contract.clone())?);
+
+    let clp_supply = Uint256::from(cw20_query_supply(&deps.querier, clp_contract)?);
+
+    let vault_lp_staked =
+        astroport_generator_lp_deposited(deps, vault_contract, lp_contract, generator_contract)?;
+
+    let vault_lp_share = Decimal256::from_ratio(vault_lp_staked, lp_supply);
+
+    let assets_price = pool_tokens_amount_and_price(deps, env.clone(), pool_contract)?;
+
+    let mut pool_value = Uint256::one();
+
+    let mut last_update: u64 = env.block.time.seconds();
+
+    for (amount, price_info) in assets_price {
+        pool_value = pool_value * amount * price_info.price;
+
+        last_update = min(last_update, price_info.last_updated_time);
+    }
+
+    // Convert pool_value from cosmwasm_bignumber::math::Decimal256 to cosmwasm_std::Uint256 in order to perform .isqrt opertation
+    let pool_value = StdUint256::from(2u8) * StdUint256::from_u128(pool_value.into()).isqrt();
+
+    let clp_price = Decimal256::from_ratio(
+        vault_lp_share * Uint256::from_str(pool_value.to_string().as_str())?,
+        clp_supply,
+    );
+
+    Ok(PriceInfo {
+        price: clp_price,
+        last_updated_time: last_update,
+    })
+}
+
+fn astroport_generator_lp_deposited(
+    deps: Deps,
+    user: Addr,
+    lp_contract: Addr,
+    generator_contract: Addr,
+) -> Result<Uint256, ContractError> {
+    let res: Uint128 = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: generator_contract.to_string(),
+        msg: to_binary(&GeneratorQueryMsg::Deposit {
+            lp_token: lp_contract.to_string(),
+            user: user.to_string(),
+        })?,
+    }))?;
+
+    Ok(Uint256::from(res))
 }

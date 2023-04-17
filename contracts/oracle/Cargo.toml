@@ -25,8 +25,9 @@ backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
 moneymarket = { path = "../../packages/moneymarket", default-features = false, version = "0.3.1"}
+astroport = { path = "../../packages/astroport", default-features = false, version = "2.0.0"}
 cosmwasm-bignumber = { path = "../../packages/bignumber"}
-cosmwasm-std = "1.0.0"
+cosmwasm-std = "1.2.0"
 cosmwasm-storage = { version = "1.0.0", features = ["iterator"] }
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }

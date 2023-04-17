@@ -15,8 +15,8 @@ pub enum ContractError {
     #[error("Asset already whitelisted")]
     AssetAlreadyWhitelisted {},
 
-    #[error("Asset is not whitelisted")]
-    AssetIsNotWhitelisted {},
+    #[error("Asset {asset:?} is not whitelisted")]
+    AssetIsNotWhitelisted { asset: String },
 
     #[error("Zero Price is not allowed")]
     NotValidZeroPrice {},
@@ -29,4 +29,7 @@ pub enum ContractError {
 
     #[error("Asset is Lsd")]
     AssetIsLsd {},
+
+    #[error("Wrong price source")]
+    WrongPriceSource {},
 }

@@ -29,7 +29,7 @@ pub enum ExecuteMsg {
 
     RegisterAsset {
         asset: String,
-        source: PriceSource,
+        source: RegisterPriceSource,
     },
 }
 
@@ -65,6 +65,34 @@ pub enum PriceSource {
         query_msg: Binary,
         path_key: Vec<String>,
         is_inverted: bool,
+    },
+    AstroportLpAutocompound {
+        vault_contract: Addr,
+        generator_contract: Addr,
+        pool_contract: Addr,
+        lp_contract: Addr,
+        assets: Vec<String>,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[allow(unreachable_patterns)]
+pub enum RegisterPriceSource {
+    Feeder {
+        feeder: Addr,
+    },
+    LsdContractQuery {
+        base_asset: String,
+        contract: Addr,
+        query_msg: Binary,
+        path_key: Vec<String>,
+        is_inverted: bool,
+    },
+    AstroportLpAutocompound {
+        vault_contract: Addr,
+        generator_contract: Addr,
+        pool_contract: Addr,
     },
 }
 
