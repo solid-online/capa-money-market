@@ -15,8 +15,8 @@ use cosmwasm_std::{
 
 use cw_storage_plus::Bound;
 use moneymarket::oracle::{
-    ConfigResponse, ExecuteMsg, FeederResponse, InstantiateMsg, PriceResponse, PriceSource,
-    PricesResponse, PricesResponseElem, QueryMsg, RegisterPriceSource,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PricesResponse, PricesResponseElem,
+    QueryMsg, RegisterSource, Source, SourceInfoResponse, UpdateSource,
 };
 
 use astroport::asset::{AssetInfo, PairInfo};
@@ -54,9 +54,11 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::RegisterAsset { asset, source } => register_asset(deps, env, info, asset, source),
+        ExecuteMsg::RegisterAsset { asset, source } => {
+            register_asset(deps, env, info, asset, source)
+        }
         ExecuteMsg::UpdateConfig { owner } => update_config(deps, info, owner),
-        ExecuteMsg::UpdateFeeder { asset, feeder } => update_feeder(deps, info, asset, feeder),
+        ExecuteMsg::UpdateSource { asset, source } => update_source(deps, env, info, asset, source),
         ExecuteMsg::FeedPrice { prices } => feed_prices(deps, env, info, prices),
     }
 }
@@ -81,10 +83,10 @@ pub fn update_config(
 
 pub fn register_asset(
     deps: DepsMut,
-    env:Env,
+    env: Env,
     info: MessageInfo,
     asset: String,
-    source: RegisterPriceSource,
+    source: RegisterSource,
 ) -> Result<Response, ContractError> {
     let config: Config = CONFIG.load(deps.storage)?;
     if info.sender != config.owner {
@@ -98,79 +100,68 @@ pub fn register_asset(
     let mut attributes: Vec<Attribute> = vec![];
 
     match source {
-        RegisterPriceSource::Feeder { feeder } => {
+        RegisterSource::Feeder { feeder } => {
             ASSETS.save(
                 deps.storage,
-                asset,
-                &PriceSource::Feeder {
-                    feeder: feeder.clone(),
+                asset.clone(),
+                &Source::Feeder {
+                    feeder,
                     price: None,
                     last_updated_time: None,
                 },
             )?;
 
             attributes.push(attr("source_type", "feeder"));
-            attributes.push(attr("feeder", feeder));
         }
-        RegisterPriceSource::LsdContractQuery {
+        RegisterSource::LsdContractQuery {
             contract,
             base_asset,
             query_msg,
             path_key,
             is_inverted,
         } => {
-            assert_asset_is_not_lsd(deps.as_ref(), base_asset.clone())?;
-
-            ASSETS.save(
-                deps.storage,
-                asset,
-                &PriceSource::LsdContractQuery {
-                    base_asset,
-                    contract: contract.clone(),
-                    query_msg,
-                    path_key,
-                    is_inverted,
-                },
+            register_lsd(
+                deps,
+                env,
+                asset.clone(),
+                base_asset,
+                contract,
+                query_msg,
+                path_key,
+                is_inverted,
             )?;
 
             attributes.push(attr("source_type", "lsd_contract_query"));
-            attributes.push(attr("contract", contract));
         }
-        RegisterPriceSource::AstroportLpAutocompound {
+        RegisterSource::AstroportLpAutocompound {
             vault_contract,
             generator_contract,
             pool_contract,
         } => {
-            
-            deps.api.addr_validate(&asset)?;
-
-            let (assets, lp_contract) = pool_infos(deps.as_ref(), pool_contract.clone())?;
-
-            // Before save it try to fetch the price to check if the variable passed are ok
-            astroport_lp_autocompound_price(deps.as_ref(), env, asset.clone(), vault_contract.clone(), generator_contract.clone(), pool_contract.clone(), lp_contract.clone())?;
-
-            ASSETS.save(
-                deps.storage,
-                asset,
-                &PriceSource::AstroportLpAutocompound {
-                    vault_contract,
-                    generator_contract,
-                    pool_contract,
-                    lp_contract,
-                    assets,
-                },
+            register_clp_astro(
+                deps,
+                env,
+                asset.clone(),
+                vault_contract,
+                generator_contract,
+                pool_contract,
             )?;
+
+            attributes.push(attr("source_type", "astroport_lp_autocompunt"));
         }
     }
+
+    attributes.push(attr("asset", asset));
 
     Ok(Response::new().add_attributes(attributes))
 }
 
-pub fn update_feeder(
+pub fn update_source(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     asset: String,
-    new_feeder: Addr,
+    update_source: UpdateSource,
 ) -> Result<Response, ContractError> {
     let config: Config = CONFIG.load(deps.storage)?;
 
@@ -178,38 +169,95 @@ pub fn update_feeder(
         return Err(ContractError::Unauthorized {});
     }
 
+    let mut attributes: Vec<Attribute> = vec![];
+
     // In case asset is not registered this return an error
     match ASSETS.load(deps.storage, asset.clone()) {
-        Ok(source) => {
-            match source {
-                PriceSource::Feeder {
+        Ok(source) => match (source, update_source) {
+            (
+                Source::Feeder {
                     price,
                     last_updated_time,
                     ..
-                } => {
-                    // Is better to use .save instead to use .update because i've alredt matched the type of PriceSource
-                    ASSETS.save(
-                        deps.storage,
-                        asset.clone(),
-                        &PriceSource::Feeder {
-                            feeder: new_feeder.clone(),
-                            price,
-                            last_updated_time,
-                        },
-                    )?
-                }
-                #[allow(unreachable_patterns)]
-                _ => return Err(ContractError::SourceIsNotFeeder { asset }),
+                },
+                UpdateSource::Feeder { feeder },
+            ) => {
+                ASSETS.save(
+                    deps.storage,
+                    asset.clone(),
+                    &Source::Feeder {
+                        feeder,
+                        price,
+                        last_updated_time,
+                    },
+                )?;
+
+                attributes.push(attr("source_type", "feeder"));
             }
-        }
+
+            (
+                Source::LsdContractQuery {
+                    base_asset,
+                    contract,
+                    query_msg,
+                    path_key,
+                    is_inverted,
+                },
+                UpdateSource::LsdContractQuery {
+                    base_asset: new_base_asset,
+                    contract: new_contract,
+                    query_msg: new_query_msg,
+                    path_key: new_path_key,
+                    is_inverted: new_is_inverted,
+                },
+            ) => {
+                register_lsd(
+                    deps,
+                    env,
+                    asset.clone(),
+                    new_base_asset.unwrap_or(base_asset),
+                    new_contract.unwrap_or(contract),
+                    new_query_msg.unwrap_or(query_msg),
+                    new_path_key.unwrap_or(path_key),
+                    new_is_inverted.unwrap_or(is_inverted),
+                )?;
+
+                attributes.push(attr("source_type", "lsd_contract_query"));
+            }
+
+            (
+                Source::AstroportLpAutocompound {
+                    vault_contract,
+                    generator_contract,
+                    pool_contract,
+                    ..
+                },
+                UpdateSource::AstroportLpAutocompound {
+                    vault_contract: new_vault_contract,
+                    generator_contract: new_generator_contract,
+                    pool_contract: new_pool_contract,
+                },
+            ) => {
+                register_clp_astro(
+                    deps,
+                    env,
+                    asset.clone(),
+                    new_vault_contract.unwrap_or(vault_contract),
+                    new_generator_contract.unwrap_or(generator_contract),
+                    new_pool_contract.unwrap_or(pool_contract),
+                )?;
+
+                attributes.push(attr("source_type", "astroport_lp_autocompunt"));
+            }
+
+            _ => return Err(ContractError::SourceIsNotFeeder { asset }),
+        },
         Err(_) => return Err(ContractError::AssetIsNotWhitelisted { asset }),
     }
 
-    Ok(Response::new().add_attributes(vec![
-        attr("action", "update_feeder"),
-        attr("asset", asset),
-        attr("feeder", new_feeder),
-    ]))
+    attributes.push(attr("asset", asset));
+
+    Ok(Response::new().add_attributes(attributes))
 }
 
 pub fn feed_prices(
@@ -225,7 +273,7 @@ pub fn feed_prices(
 
         match ASSETS.load(deps.storage, asset.clone()) {
             Ok(source) => match source {
-                PriceSource::Feeder { feeder, .. } => {
+                Source::Feeder { feeder, .. } => {
                     if feeder != info.sender {
                         return Err(ContractError::Unauthorized {});
                     }
@@ -239,7 +287,7 @@ pub fn feed_prices(
                     ASSETS.save(
                         deps.storage,
                         asset,
-                        &PriceSource::Feeder {
+                        &Source::Feeder {
                             feeder,
                             price: Some(price),
                             last_updated_time: Some(env.block.time.seconds()),
@@ -260,7 +308,7 @@ pub fn feed_prices(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps).unwrap()),
-        QueryMsg::Feeder { asset } => to_binary(&query_feeder(deps, asset).unwrap()),
+        QueryMsg::SourceInfo { asset } => to_binary(&query_source_info(deps, asset).unwrap()),
         QueryMsg::Price { base, quote } => to_binary(&query_price(deps, env, base, quote).unwrap()),
         QueryMsg::Prices { start_after, limit } => {
             to_binary(&query_prices(deps, env, start_after, limit).unwrap())
@@ -278,14 +326,10 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     Ok(resp)
 }
 
-fn query_feeder(deps: Deps, asset: String) -> Result<FeederResponse, ContractError> {
-    match ASSETS.load(deps.storage, asset.clone())? {
-        PriceSource::Feeder { feeder, .. } => Ok(FeederResponse {
-            asset,
-            feeder: feeder.to_string(),
-        }),
-        #[allow(unreachable_patterns)]
-        _ => Err(ContractError::SourceIsNotFeeder { asset }),
+fn query_source_info(deps: Deps, asset: String) -> Result<SourceInfoResponse, ContractError> {
+    match ASSETS.load(deps.storage, asset.clone()) {
+        Ok(source) => Ok(SourceInfoResponse { source }),
+        Err(_) => Err(ContractError::AssetIsNotWhitelisted { asset }),
     }
 }
 
@@ -347,10 +391,75 @@ fn query_prices(
 
 // --- FUNCTIONS ---
 
+/// Properly register/update a LSD
+#[allow(clippy::too_many_arguments)]
+fn register_lsd(
+    deps: DepsMut,
+    env: Env,
+    asset: String,
+    base_asset: String,
+    contract: Addr,
+    query_msg: Binary,
+    path_key: Vec<String>,
+    is_inverted: bool,
+) -> Result<(), ContractError> {
+    deps.api.addr_validate(&asset)?;
+
+    assert_asset_is_not_lsd(deps.as_ref(), asset.clone())?;
+
+    ASSETS.save(
+        deps.storage,
+        asset.clone(),
+        &Source::LsdContractQuery {
+            base_asset,
+            contract,
+            query_msg,
+            path_key,
+            is_inverted,
+        },
+    )?;
+
+    // get_price is called to check if the passed data are valids, otheriwse the tx is reverted
+    get_price(deps.as_ref(), env, asset)?;
+
+    Ok(())
+}
+
+/// Properly register/update a clp_astro
+fn register_clp_astro(
+    deps: DepsMut,
+    env: Env,
+    asset: String,
+    vault_contract: Addr,
+    generator_contract: Addr,
+    pool_contract: Addr,
+) -> Result<(), ContractError> {
+    deps.api.addr_validate(&asset)?;
+
+    let (assets, lp_contract) = pool_infos(deps.as_ref(), pool_contract.clone())?;
+
+    ASSETS.save(
+        deps.storage,
+        asset.clone(),
+        &Source::AstroportLpAutocompound {
+            vault_contract,
+            generator_contract,
+            pool_contract,
+            lp_contract,
+            assets,
+        },
+    )?;
+
+    // get_price is called to check if the passed data are valids, otheriwse the tx is reverted
+    get_price(deps.as_ref(), env, asset)?;
+
+    Ok(())
+}
+
 fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, ContractError> {
     match ASSETS.load(deps.storage, asset.clone()) {
         Ok(source) => match source {
-            PriceSource::Feeder {
+            Source::Feeder {
                 price,
                 last_updated_time,
                 ..
@@ -365,7 +474,7 @@ fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, ContractE
                 }
             }
 
-            PriceSource::LsdContractQuery {
+            Source::LsdContractQuery {
                 base_asset,
                 contract,
                 query_msg,
@@ -398,7 +507,7 @@ fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, ContractE
                 })
             }
 
-            PriceSource::AstroportLpAutocompound {
+            Source::AstroportLpAutocompound {
                 vault_contract,
                 generator_contract,
                 pool_contract,
@@ -422,7 +531,7 @@ fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, ContractE
 fn assert_asset_is_not_lsd(deps: Deps, asset: String) -> Result<(), ContractError> {
     match ASSETS.load(deps.storage, asset.clone()) {
         Ok(source) => match source {
-            PriceSource::LsdContractQuery { .. } => Err(ContractError::AssetIsLsd {}),
+            Source::LsdContractQuery { .. } => Err(ContractError::AssetIsLsd {}),
 
             _ => Ok(()),
         },

@@ -22,14 +22,14 @@ pub enum ExecuteMsg {
         prices: Vec<(String, Decimal256)>, // (asset, price)
     },
 
-    UpdateFeeder {
+    UpdateSource {
         asset: String,
-        feeder: Addr,
+        source: UpdateSource,
     },
 
     RegisterAsset {
         asset: String,
-        source: RegisterPriceSource,
+        source: RegisterSource,
     },
 }
 
@@ -37,7 +37,7 @@ pub enum ExecuteMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     Config {},
-    Feeder {
+    SourceInfo {
         asset: String,
     },
     Price {
@@ -53,7 +53,7 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[allow(unreachable_patterns)]
-pub enum PriceSource {
+pub enum Source {
     Feeder {
         feeder: Addr,
         price: Option<Decimal256>,
@@ -78,7 +78,7 @@ pub enum PriceSource {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[allow(unreachable_patterns)]
-pub enum RegisterPriceSource {
+pub enum RegisterSource {
     Feeder {
         feeder: Addr,
     },
@@ -96,6 +96,27 @@ pub enum RegisterPriceSource {
     },
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[allow(unreachable_patterns)]
+pub enum UpdateSource {
+    Feeder {
+        feeder: Addr,
+    },
+    LsdContractQuery {
+        base_asset: Option<String>,
+        contract: Option<Addr>,
+        query_msg: Option<Binary>,
+        path_key: Option<Vec<String>>,
+        is_inverted: Option<bool>,
+    },
+    AstroportLpAutocompound {
+        vault_contract: Option<Addr>,
+        generator_contract: Option<Addr>,
+        pool_contract: Option<Addr>,
+    },
+}
+
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ConfigResponse {
@@ -105,9 +126,8 @@ pub struct ConfigResponse {
 
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct FeederResponse {
-    pub asset: String,
-    pub feeder: String,
+pub struct SourceInfoResponse {
+    pub source: Source,
 }
 
 // We define a custom struct for each query response
