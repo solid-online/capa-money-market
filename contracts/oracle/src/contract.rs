@@ -24,7 +24,7 @@ use astroport::generator::QueryMsg as GeneratorQueryMsg;
 use astroport::pair::{PoolResponse, QueryMsg as PairQueryMsg};
 use astroport::querier::query_supply as cw20_query_supply;
 
-// settings for pagination
+// Settings for pagination
 const MAX_LIMIT: u32 = 10;
 const DEFAULT_LIMIT: u32 = 10;
 
@@ -133,7 +133,7 @@ pub fn register_asset(
 
             attributes.push(attr("source_type", "lsd_contract_query"));
         }
-        RegisterSource::AstroportLpAutocompound {
+        RegisterSource::AstroportLpVault {
             vault_contract,
             generator_contract,
             pool_contract,
@@ -226,13 +226,13 @@ pub fn update_source(
             }
 
             (
-                Source::AstroportLpAutocompound {
+                Source::AstroportLpVault {
                     vault_contract,
                     generator_contract,
                     pool_contract,
                     ..
                 },
-                UpdateSource::AstroportLpAutocompound {
+                UpdateSource::AstroportLpVault {
                     vault_contract: new_vault_contract,
                     generator_contract: new_generator_contract,
                     pool_contract: new_pool_contract,
@@ -405,7 +405,7 @@ fn register_lsd(
 ) -> Result<(), ContractError> {
     deps.api.addr_validate(&asset)?;
 
-    assert_asset_is_not_lsd(deps.as_ref(), asset.clone())?;
+    assert_asset_is_not_lsd(deps.as_ref(), base_asset.clone())?;
 
     ASSETS.save(
         deps.storage,
@@ -434,14 +434,12 @@ fn register_clp_astro(
     generator_contract: Addr,
     pool_contract: Addr,
 ) -> Result<(), ContractError> {
-    deps.api.addr_validate(&asset)?;
-
     let (assets, lp_contract) = pool_infos(deps.as_ref(), pool_contract.clone())?;
 
     ASSETS.save(
         deps.storage,
         asset.clone(),
-        &Source::AstroportLpAutocompound {
+        &Source::AstroportLpVault {
             vault_contract,
             generator_contract,
             pool_contract,
@@ -456,6 +454,7 @@ fn register_clp_astro(
     Ok(())
 }
 
+/// Fetch the price of a specific asset
 fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, ContractError> {
     match ASSETS.load(deps.storage, asset.clone()) {
         Ok(source) => match source {
@@ -507,13 +506,13 @@ fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, ContractE
                 })
             }
 
-            Source::AstroportLpAutocompound {
+            Source::AstroportLpVault {
                 vault_contract,
                 generator_contract,
                 pool_contract,
                 lp_contract,
                 ..
-            } => astroport_lp_autocompound_price(
+            } => astroport_lp_vault_price(
                 deps,
                 env,
                 asset,
@@ -595,7 +594,9 @@ fn pool_tokens_amount_and_price(
     vec_address_amount
 }
 
-fn astroport_lp_autocompound_price(
+/// The calculation of the value of liquidity token, see: https://blog.alphafinance.io/fair-lp-token-pricing/.
+/// This formulation avoids a potential sandwich attack that distorts asset prices by a flashloan.
+fn astroport_lp_vault_price(
     deps: Deps,
     env: Env,
     clp_contract: String,
@@ -614,6 +615,11 @@ fn astroport_lp_autocompound_price(
     let vault_lp_share = Decimal256::from_ratio(vault_lp_staked, lp_supply);
 
     let assets_price = pool_tokens_amount_and_price(deps, env.clone(), pool_contract)?;
+
+    // Currently we support only pools with two asset
+    if assets_price.len() != 2 {
+        return Err(ContractError::PoolInvalidAssetsLenght {});
+    }
 
     let mut pool_value = Uint256::one();
 
@@ -639,6 +645,7 @@ fn astroport_lp_autocompound_price(
     })
 }
 
+/// Return the amount of a specific lp staked into generator conract for a user
 fn astroport_generator_lp_deposited(
     deps: Deps,
     user: Addr,

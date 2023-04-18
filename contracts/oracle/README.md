@@ -1,9 +1,47 @@
 # Oracle
 
 The Oracle contract acts as the price source for the CAPA Money Market.
-Stablecoin-denominated prices of bAssets are periodically reported by
-oracle feeders, and are made queriable by other smart contracts in the
-Capapult ecosystem.
+
+When an asset is registered it is necessary to specify the source.
+
+By source we mean the way in which the price is calculated.
+Compared to the previous version (which allowed to manage prices only from feeder) is now possible to determine the source in the following ways:
+
+- `Feeder`: When registered, a feeder address must be specified. The feeder can periodically update the prices of this type of asset, which are saved (like old version).
+
+  
+- `LsdContractQuery`: Currently Capapult support LSD tokens as collateral (LunaX, ampLuna, bLuna) and a offchain script compute the price of LSDs and feed them to the `oracle` contract. However, the rate of LSD/luna is present onchain and it can be queried to specific contracts.
+
+  The price of LSD is : $base\_asset\_price *  LSD\_ratio$
+
+  This allow to have the compute the price of LSDs if the `base_asset` (luna) is alredy registered and avaiable in the `oracle`. To do this, the following fields must be specified:
+    - `base_asset`: The underlying asset of LSD (it must to be alredy registered);
+    - `contract`: The contract to query the ratio;
+    - `query_msg`: Binary msg to send;
+    - `path_key`: `vec<String>` that specify the position of the ratio in the response;
+    - `is_reverted`: In case the ratio is reversed, the division will be done instead of the multiplication;
+
+- `AstroportLpVault`: One of the fundamental steps for integrating Capapult with the rest of the ecosystem is the use of LP tokens as collateral.
+  
+  Since provide the LP tokens directly involves the loss of staking rewards for users, the best solution is to accept **cTokens/vaultTokens** (the LP token recived for deposit the pool LP into a vault that handle the rewards).
+  
+  Currently **Any** vault that deposit LP on `AstroportGenerator` and give to the User a LP vault are supported (like `Spectrum` / `Eris` vault).
+  To determinate the price of LPs, the prices of the **pool assets** must be recorded in the `oracle`.
+
+  The ***adapted*** formula used can be found [here](https://blog.alphafinance.io/fair-lp-token-pricing/):
+
+  $$total\_pool\_value= n*\sqrt[n]{\prod_{i=1}^n amount\_in\_pool_i * price_i}$$
+
+  $$single\_vault\_lp\_value = \frac{total\_pool\_value * \frac{lp\_staked}{lp\_supply}}{vault\_lp\_supply}$$
+
+  Where ***n*** is the number of the assets in the pool (***currently only pools with 2 assets are supported***).
+
+  The following fields must be specified:
+  - `vault_contract`: The contract of the vault;
+  - `generator_contract`: Astroport generator contract;
+  - `pool_contract`: The contract of the pool;
+  
+This type of structure allows to easily implement new methods to compute the price.
 
 ## InstantiateMSG
 
@@ -50,18 +88,18 @@ pub enum ExecuteMsg {
 
 ```
 
-### RegisterFeeder
+### RegisterAsset
 
-Registers a feeder to the specified asset token
+Registers a new asset
 
 ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    RegisterFeeder {
-        asset: String, // Asset to register feeder
-        feeder: String, // Address of feeder to register
-    }
+    RegisterAsset {
+        asset: String, // Asset denom
+        source: RegisterSource, // Type of soruce
+    },
 }
 ```
 
@@ -71,8 +109,12 @@ pub enum ExecuteMsg {
 ```
 {
   "register_feeder": {
-    "asset": "terra1...", // Stringified Cw20 contract address
-    "feeder": "terra1..." 
+    "asset": "terra1...", // Asset denom
+    "source": {
+      "feeder" : {
+        "feeder": "terra1..." // Feeder address
+      }
+    }
   }
 }
 ```
@@ -150,16 +192,16 @@ pub struct ConfigResponse {
 }
 ```
 
-### Feeder
+### SourceInfo
 
-Gets the feeder for the specified asset.
+Gets the source info for the specified asset.
 
 ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    Feeder {
-        asset: String, // Asset to get feeder information
+    SourceInfo {
+        asset: String, // Asset to get source information
     }
 }
 ```
@@ -169,20 +211,19 @@ pub enum QueryMsg {
 
 ```
 {
-  "feeder": {
-    "asset": "terra1..." // Stringified Cw20 Token contract address
+  "source_info": {
+    "asset": "terra1..." // Asset denom
   }
 }
 ```
 
-### FeederResponse
+### SourceInfoResponse
 
 
 ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct FeederResponse {
-    pub asset: String, // Asset type
-    pub feeder: String, // Address of feeder allowed to feed prices for this asset
+pub struct SourceInfoResponse {
+    pub source: String, // Soruce informations
 }
 ```
 
@@ -191,8 +232,15 @@ pub struct FeederResponse {
 
 ```
 {
-  "asset": "terra1...", // Stringified Cw20 Token contract address
-  "feeder": "terra1..." 
+  "source": {
+    "lsd_contract_query":{
+        "base_asset": "uluna", // Base asset denom
+        "contract": "terra1...", // Contract to query for ratio
+        query_msg: "eyJjb25maWciOnt9fQ==", // Query msg in binary
+        path_key: ["exchange_rate"], // Path of ratio in the response 
+        is_inverted: false, // If true, a division will be performed instead of a multiplication
+      }
+    }
 }
 ```
 

@@ -5,7 +5,7 @@ use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use cosmwasm_std::{from_binary, to_binary, Addr, Isqrt, OwnedDeps, Uint256 as StdUint256};
 use moneymarket::oracle::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PricesResponse, PricesResponseElem,
-    QueryMsg, RegisterSource,
+    QueryMsg, RegisterSource, UpdateSource,
 };
 use std::str::FromStr;
 
@@ -75,6 +75,110 @@ fn update_config() {
         Err(ContractError::Unauthorized {}) => (),
         _ => panic!("Must return unauthorized error"),
     }
+}
+
+#[test]
+fn update_source() {
+    let price_luna = Decimal256::from_str("2").unwrap();
+
+    let mut deps = oracle_mock_dependencies(&[]);
+
+    // Initialize
+    let msg = InstantiateMsg {
+        owner: "owner0000".to_string(),
+        base_asset: "base0000".to_string(),
+    };
+
+    let info = mock_info("addr0000", &[]);
+    let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+    // Register asset and feeder for uluna
+    let msg = ExecuteMsg::RegisterAsset {
+        asset: "uluna".to_string(),
+        source: RegisterSource::Feeder {
+            feeder: Addr::unchecked("feeder0000".to_string()),
+        },
+    };
+
+    let info = mock_info("owner0000", &[]);
+    let _res = execute(deps.as_mut(), mock_env(), info, msg);
+
+    // Feed prices
+    let env = mock_env();
+    let msg = ExecuteMsg::FeedPrice {
+        prices: vec![("uluna".to_string(), price_luna)],
+    };
+
+    let info = mock_info("feeder0000", &[]);
+    let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+    // Get the price
+    let msg = QueryMsg::Price {
+        base: "uluna".to_string(),
+        quote: "base0000".to_string(),
+    };
+
+    let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+
+    assert_eq!(res.rate, price_luna);
+
+    // Update the feeder
+
+    let msg = ExecuteMsg::UpdateSource {
+        asset: "uluna".to_string(),
+        source: UpdateSource::Feeder {
+            feeder: Addr::unchecked("feeder0001"),
+        },
+    };
+
+    // Try to use a non owner address
+
+    let info = mock_info("attacker0000", &[]);
+    let res = execute(deps.as_mut(), env.clone(), info, msg.clone());
+
+    match res {
+        Ok(_) => panic!("Should return Err"),
+        Err(v) => match v {
+            ContractError::Unauthorized {} => (),
+            _ => panic!("Should return Unauthorized"),
+        },
+    };
+
+    // Try to use a non owner address
+
+    let info = mock_info("owner0000", &[]);
+    let res = execute(deps.as_mut(), env.clone(), info, msg);
+
+    match res {
+        Ok(_) => (),
+        Err(_) => panic!("Should return Ok"),
+    };
+
+    // Feed a new price
+
+    let price_luna = Decimal256::from_str("3").unwrap();
+
+    let msg = ExecuteMsg::FeedPrice {
+        prices: vec![("uluna".to_string(), price_luna)],
+    };
+
+    let info = mock_info("feeder0001", &[]);
+    let res = execute(deps.as_mut(), env, info, msg);
+
+    match res {
+        Ok(_) => (),
+        Err(_) => panic!("Should return Ok"),
+    };
+
+    // Get the new price
+    let msg = QueryMsg::Price {
+        base: "uluna".to_string(),
+        quote: "base0000".to_string(),
+    };
+
+    let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+
+    assert_eq!(res.rate, price_luna);
 }
 
 #[test]
@@ -265,7 +369,7 @@ fn lsd_price() {
 
     // Register asset and feeder for ampLuna
     let msg = ExecuteMsg::RegisterAsset {
-        asset: "ampLuna".to_string(),
+        asset: "ampluna".to_string(),
         source: RegisterSource::LsdContractQuery {
             base_asset: "uluna".to_string(),
             contract: Addr::unchecked(
@@ -288,7 +392,7 @@ fn lsd_price() {
     // Get the price
 
     let msg = QueryMsg::Price {
-        base: "ampLuna".to_string(),
+        base: "ampluna".to_string(),
         quote: "base0000".to_string(),
     };
 
@@ -313,7 +417,7 @@ fn lsd_price() {
         PricesResponse {
             prices: vec![
                 PricesResponseElem {
-                    asset: "ampLuna".to_string(),
+                    asset: "ampluna".to_string(),
                     price: Decimal256::from_str("1.5").unwrap()
                         * Decimal256::from_str("1.1").unwrap(),
                     last_updated_time: env.block.time.seconds()
@@ -346,7 +450,7 @@ fn lsd_price() {
         PricesResponse {
             prices: vec![
                 PricesResponseElem {
-                    asset: "ampLuna".to_string(),
+                    asset: "ampluna".to_string(),
                     price: Decimal256::from_str("1.5").unwrap()
                         * Decimal256::from_str("1.1").unwrap(),
                     last_updated_time: env.block.time.seconds()
@@ -425,7 +529,7 @@ fn lsd_price_http() {
 
     // Register asset and feeder for ampLuna
     let msg = ExecuteMsg::RegisterAsset {
-        asset: "ampLuna".to_string(),
+        asset: "terra1ecgazyd0waaj3g7l9cmy5gulhxkps2gmxu9ghducvuypjq68mq2s5lvsct".to_string(),
         source: RegisterSource::LsdContractQuery {
             base_asset: "uluna".to_string(),
             contract: Addr::unchecked(
@@ -443,7 +547,7 @@ fn lsd_price_http() {
     // Get the price
 
     let msg = QueryMsg::Price {
-        base: "ampLuna".to_string(),
+        base: "terra1ecgazyd0waaj3g7l9cmy5gulhxkps2gmxu9ghducvuypjq68mq2s5lvsct".to_string(),
         quote: "base0000".to_string(),
     };
 
@@ -453,23 +557,34 @@ fn lsd_price_http() {
 }
 
 #[test]
-fn astroport_lp_autocompound() {
+fn astroport_lp_vault() {
     let amount_usdc_in_pool: Uint256 = Uint256::from(50_000_u128);
     let amount_uluna_in_pool: Uint256 = Uint256::from(25_000_u128);
+    let amount_uatom_in_pool: Uint256 = Uint256::from(5_000_u128);
 
     let price_usdc = Decimal256::from_str("1").unwrap();
     let price_luna = Decimal256::from_str("2").unwrap();
+    let price_atom = Decimal256::from_str("10").unwrap();
 
     let pool_usdc_uluna = Addr::unchecked("pool_usdc_uluna".to_string());
+    let pool_usdc_uluna_atom = Addr::unchecked("pool_usdc_uluna_atom".to_string());
 
     let lp_usdc_luna = Addr::unchecked("lp_usdc_uluna".to_string());
     let clp_usdc_luna = Addr::unchecked("clp_usdc_uluna".to_string());
 
-    let vault = Addr::unchecked("vault".to_string());
+    let lp_usdc_luna_atom = Addr::unchecked("lp_usdc_uluna_atom".to_string());
+    let clp_usdc_luna_atom = Addr::unchecked("clp_usdc_uluna_atom".to_string());
+
+    let vault_luna_usdc = Addr::unchecked("vault_luna_usdc".to_string());
+    let vault_luna_usdc_atom = Addr::unchecked("vault_luna_usdc_atom".to_string());
 
     let supply_lp_usdc_uluna: Uint256 = Uint256::from(100_000_u128);
     let staked_lp_usdc_uluna: Uint256 = Uint256::from(20_000_u128);
     let supply_clp_usdc_uluna: Uint256 = Uint256::from(20_000_u128);
+
+    let supply_lp_usdc_uluna_atom: Uint256 = Uint256::from(100_000_u128);
+    let staked_lp_usdc_uluna_atom: Uint256 = Uint256::from(20_000_u128);
+    let supply_clp_usdc_uluna_atom: Uint256 = Uint256::from(20_000_u128);
 
     let mut deps = oracle_mock_dependencies(&[]);
 
@@ -479,7 +594,21 @@ fn astroport_lp_autocompound() {
         .set_token_supply(clp_usdc_luna.clone(), supply_clp_usdc_uluna);
 
     deps.querier
-        .set_generator_lp_stake(vault.clone(), lp_usdc_luna.clone(), staked_lp_usdc_uluna);
+        .set_token_supply(lp_usdc_luna_atom.clone(), supply_lp_usdc_uluna_atom);
+    deps.querier
+        .set_token_supply(clp_usdc_luna_atom.clone(), supply_clp_usdc_uluna_atom);
+
+    deps.querier.set_generator_lp_stake(
+        vault_luna_usdc.clone(),
+        lp_usdc_luna.clone(),
+        staked_lp_usdc_uluna,
+    );
+
+    deps.querier.set_generator_lp_stake(
+        vault_luna_usdc_atom.clone(),
+        lp_usdc_luna_atom.clone(),
+        staked_lp_usdc_uluna_atom,
+    );
 
     deps.querier.set_pool_info(
         pool_usdc_uluna.clone(),
@@ -489,6 +618,18 @@ fn astroport_lp_autocompound() {
                 ("uluna".to_string(), amount_uluna_in_pool),
             ],
             lp: lp_usdc_luna,
+        },
+    );
+
+    deps.querier.set_pool_info(
+        pool_usdc_uluna_atom.clone(),
+        PoolStruct {
+            assets: vec![
+                ("usdc".to_string(), amount_usdc_in_pool),
+                ("uluna".to_string(), amount_uluna_in_pool),
+                ("uatom".to_string(), amount_uatom_in_pool),
+            ],
+            lp: lp_usdc_luna_atom,
         },
     );
 
@@ -527,30 +668,68 @@ fn astroport_lp_autocompound() {
     let info = mock_info("owner0000", &[]);
     let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
+    // Register asset and feeder for uatom
+    let msg = ExecuteMsg::RegisterAsset {
+        asset: "uatom".to_string(),
+        source: RegisterSource::Feeder {
+            feeder: Addr::unchecked("feeder0000".to_string()),
+        },
+    };
+
+    let info = mock_info("owner0000", &[]);
+    let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+
     // Feed prices
     let env = mock_env();
     let msg = ExecuteMsg::FeedPrice {
         prices: vec![
             ("uluna".to_string(), price_luna),
             ("usdc".to_string(), price_usdc),
+            ("uatom".to_string(), price_atom),
         ],
     };
 
     let info = mock_info("feeder0000", &[]);
     let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-    // Register clp
+    // Register clp usdc_luna_atom
+    let msg = ExecuteMsg::RegisterAsset {
+        asset: clp_usdc_luna_atom.to_string(),
+        source: RegisterSource::AstroportLpVault {
+            vault_contract: vault_luna_usdc_atom,
+            generator_contract: Addr::unchecked("generator".to_string()),
+            pool_contract: pool_usdc_uluna_atom,
+        },
+    };
+
+    let info = mock_info("owner0000", &[]);
+    let res = execute(deps.as_mut(), env.clone(), info, msg);
+
+    match res {
+        Ok(_) => panic!("Should return error"),
+        Err(v) => match v {
+            ContractError::PoolInvalidAssetsLenght {} => (),
+            _ => panic!("Wrong error returned"),
+        },
+    }
+
+    // Register clp usdc_luna
     let msg = ExecuteMsg::RegisterAsset {
         asset: clp_usdc_luna.to_string(),
-        source: RegisterSource::AstroportLpAutocompound {
-            vault_contract: vault,
+        source: RegisterSource::AstroportLpVault {
+            vault_contract: vault_luna_usdc,
             generator_contract: Addr::unchecked("generator".to_string()),
             pool_contract: pool_usdc_uluna,
         },
     };
 
     let info = mock_info("owner0000", &[]);
-    let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
+    let res = execute(deps.as_mut(), env.clone(), info, msg);
+
+    match res {
+        Ok(_) => (),
+        Err(_) => panic!("Should return ok"),
+    }
 
     let msg = QueryMsg::Price {
         base: clp_usdc_luna.to_string(),
@@ -588,12 +767,12 @@ fn astroport_lp_autocompound() {
 }
 
 #[test]
-fn astroport_lp_autocompound_http() {
+fn astroport_lp_vault_http() {
     let usdc = "ibc/B3504E092456BA618CC28AC671A71FB08C6CA0FD0BE7C8A5B5A3E2DD933CC9E4".to_string();
     let uluna = "uluna".to_string();
 
     let price_usdc = Decimal256::from_str("1").unwrap();
-    let price_luna = Decimal256::from_str("1.36").unwrap();
+    let price_luna = Decimal256::from_str("1.4").unwrap();
 
     // ERIS PROTOCOL FARM USDC-LUNA
 
@@ -658,7 +837,7 @@ fn astroport_lp_autocompound_http() {
     // Register clp
     let msg = ExecuteMsg::RegisterAsset {
         asset: clp_usdc_luna.to_string(),
-        source: RegisterSource::AstroportLpAutocompound {
+        source: RegisterSource::AstroportLpVault {
             vault_contract: vault,
             generator_contract: generator,
             pool_contract: pool_usdc_uluna,
@@ -675,5 +854,6 @@ fn astroport_lp_autocompound_http() {
 
     let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
-    println!("{:?}", res)
+    println!("{:?}", res);
+    println!("{:?}", res.rate * Uint256::from(1000_u128))
 }

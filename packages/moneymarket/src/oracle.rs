@@ -66,7 +66,7 @@ pub enum Source {
         path_key: Vec<String>,
         is_inverted: bool,
     },
-    AstroportLpAutocompound {
+    AstroportLpVault {
         vault_contract: Addr,
         generator_contract: Addr,
         pool_contract: Addr,
@@ -89,7 +89,7 @@ pub enum RegisterSource {
         path_key: Vec<String>,
         is_inverted: bool,
     },
-    AstroportLpAutocompound {
+    AstroportLpVault {
         vault_contract: Addr,
         generator_contract: Addr,
         pool_contract: Addr,
@@ -110,7 +110,7 @@ pub enum UpdateSource {
         path_key: Option<Vec<String>>,
         is_inverted: Option<bool>,
     },
-    AstroportLpAutocompound {
+    AstroportLpVault {
         vault_contract: Option<Addr>,
         generator_contract: Option<Addr>,
         pool_contract: Option<Addr>,

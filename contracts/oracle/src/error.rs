@@ -32,4 +32,7 @@ pub enum ContractError {
 
     #[error("Wrong price source")]
     WrongPriceSource {},
+
+    #[error("Pool must have two assets")]
+    PoolInvalidAssetsLenght {},
 }
