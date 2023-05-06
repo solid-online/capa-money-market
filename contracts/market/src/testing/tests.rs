@@ -343,7 +343,8 @@ fn borrow_stable() {
         vec![
             attr("action", "borrow_stable"),
             attr("borrower", "addr0000"),
-            attr("borrow_amount", "500000")
+            attr("borrow_amount", "500000"),
+            attr("mint_fee", "2500")
         ]
     );
 
