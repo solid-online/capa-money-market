@@ -69,6 +69,7 @@ pub fn borrow_stable(
             attr("action", "borrow_stable"),
             attr("borrower", borrower),
             attr("borrow_amount", borrow_amount),
+            attr("mint_fee", one_time_borrow_fee),
         ]))
 }
 

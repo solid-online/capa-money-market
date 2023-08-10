@@ -25,6 +25,7 @@ fn proper_compute_borrower_interest() {
         oracle_contract: Addr::unchecked("oracle"),
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
+        flash_mint_fee: Some(Decimal256::from_str("0.00025").unwrap()),
     };
     // 1 solid price borrow_fee = 0
     deps.querier.with_oracle_price(&[(
@@ -89,6 +90,7 @@ fn proper_compute_fee() {
         oracle_contract: Addr::unchecked("oracle"),
         base_borrow_fee: Decimal256::from_str("0.005").unwrap(),
         fee_increase_factor: Decimal256::from_str("2").unwrap(),
+        flash_mint_fee: Some(Decimal256::from_str("0.00025").unwrap()),
     };
     // 1 solid price borrow_fee = 0 + 0.0025
     deps.querier.with_oracle_price(&[(
