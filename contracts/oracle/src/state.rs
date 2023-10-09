@@ -1,4 +1,5 @@
 use cosmwasm_bignumber::math::Decimal256;
+use cosmwasm_schema::cw_serde;
 use cw_storage_plus::{Item, Map};
 use moneymarket::oracle::Source;
 use schemars::JsonSchema;
@@ -17,7 +18,7 @@ pub struct Config {
     pub base_asset: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct PriceData {
     pub source: Source,
 }

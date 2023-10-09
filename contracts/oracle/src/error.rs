@@ -27,9 +27,6 @@ pub enum ContractError {
     #[error("Price has never been feeded")]
     PriceNeverFeeded {},
 
-    #[error("Asset is Lsd")]
-    AssetIsLsd {},
-
     #[error("Wrong price source")]
     WrongPriceSource {},
 

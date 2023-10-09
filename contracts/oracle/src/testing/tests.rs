@@ -2,10 +2,12 @@ use crate::contract::{execute, instantiate, query};
 use crate::error::ContractError;
 use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-use cosmwasm_std::{from_binary, to_binary, Addr, Isqrt, OwnedDeps, Uint256 as StdUint256};
+use cosmwasm_std::{
+    from_binary, to_binary, Addr, Isqrt, OwnedDeps, QueryRequest, Uint256 as StdUint256,
+};
 use moneymarket::oracle::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PricesResponse, PricesResponseElem,
-    QueryMsg, RegisterSource, UpdateSource,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, PathKey, PriceResponse, PricesResponse,
+    PricesResponseElem, QueryMsg, RegisterSource, UpdateSource,
 };
 use std::str::FromStr;
 
@@ -370,13 +372,18 @@ fn lsd_price() {
     // Register asset and feeder for ampLuna
     let msg = ExecuteMsg::RegisterAsset {
         asset: "ampluna".to_string(),
-        source: RegisterSource::LsdContractQuery {
-            base_asset: "uluna".to_string(),
-            contract: Addr::unchecked(
-                "terra10788fkzah89xrdm27zkj5yvhj9x3494lxawzm5qq3vvxcqz2yzaqyd3enk".to_string(),
-            ),
-            query_msg: to_binary(&AvaiableQueries::State {}).unwrap(),
-            path_key: vec!["state".to_string(), "exchange_rate".to_string()],
+        source: RegisterSource::OnChainRate {
+            base_asset: Some("uluna".to_string()),
+            query: QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
+                contract_addr: "terra10788fkzah89xrdm27zkj5yvhj9x3494lxawzm5qq3vvxcqz2yzaqyd3enk"
+                    .to_string(),
+                msg: to_binary(&AvaiableQueries::State {}).unwrap(),
+            }),
+
+            path_key: vec![
+                PathKey::String("state".to_string()),
+                PathKey::String("exchange_rate".to_string()),
+            ],
             is_inverted: false,
         },
     };
@@ -530,13 +537,14 @@ fn lsd_price_http() {
     // Register asset and feeder for ampLuna
     let msg = ExecuteMsg::RegisterAsset {
         asset: "terra1ecgazyd0waaj3g7l9cmy5gulhxkps2gmxu9ghducvuypjq68mq2s5lvsct".to_string(),
-        source: RegisterSource::LsdContractQuery {
-            base_asset: "uluna".to_string(),
-            contract: Addr::unchecked(
-                "terra10788fkzah89xrdm27zkj5yvhj9x3494lxawzm5qq3vvxcqz2yzaqyd3enk".to_string(),
-            ),
-            query_msg: to_binary(&AvaiableQueries::State {}).unwrap(),
-            path_key: vec!["exchange_rate".to_string()],
+        source: RegisterSource::OnChainRate {
+            base_asset: Some("uluna".to_string()),
+            query: QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
+                contract_addr: "terra10788fkzah89xrdm27zkj5yvhj9x3494lxawzm5qq3vvxcqz2yzaqyd3enk"
+                    .to_string(),
+                msg: to_binary(&AvaiableQueries::State {}).unwrap(),
+            }),
+            path_key: vec![PathKey::String("exchange_rate".to_string())],
             is_inverted: false,
         },
     };

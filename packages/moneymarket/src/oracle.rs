@@ -1,9 +1,11 @@
+use cosmwasm_schema::cw_serde;
+use rhaki_cw_plus::utils::UpdateOption;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_bignumber::math::Decimal256;
 
-use cosmwasm_std::{Addr, Binary};
+use cosmwasm_std::{Addr, Empty, QueryRequest};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -11,8 +13,7 @@ pub struct InstantiateMsg {
     pub base_asset: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     UpdateConfig {
         owner: Option<String>,
@@ -50,20 +51,17 @@ pub enum QueryMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-#[allow(unreachable_patterns)]
+#[cw_serde]
 pub enum Source {
     Feeder {
         feeder: Addr,
         price: Option<Decimal256>,
         last_updated_time: Option<u64>,
     },
-    LsdContractQuery {
-        base_asset: String,
-        contract: Addr,
-        query_msg: Binary,
-        path_key: Vec<String>,
+    OnChainQuery {
+        base_asset: Option<String>,
+        query: QueryRequest<Empty>,
+        path_key: Vec<PathKey>,
         is_inverted: bool,
     },
     AstroportLpVault {
@@ -75,18 +73,15 @@ pub enum Source {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-#[allow(unreachable_patterns)]
+#[cw_serde]
 pub enum RegisterSource {
     Feeder {
         feeder: Addr,
     },
-    LsdContractQuery {
-        base_asset: String,
-        contract: Addr,
-        query_msg: Binary,
-        path_key: Vec<String>,
+    OnChainRate {
+        base_asset: Option<String>,
+        query: QueryRequest<Empty>,
+        path_key: Vec<PathKey>,
         is_inverted: bool,
     },
     AstroportLpVault {
@@ -96,18 +91,15 @@ pub enum RegisterSource {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-#[allow(unreachable_patterns)]
+#[cw_serde]
 pub enum UpdateSource {
     Feeder {
         feeder: Addr,
     },
-    LsdContractQuery {
-        base_asset: Option<String>,
-        contract: Option<Addr>,
-        query_msg: Option<Binary>,
-        path_key: Option<Vec<String>>,
+    OnChainRate {
+        base_asset: Option<UpdateOption<String>>,
+        query: Option<QueryRequest<Empty>>,
+        path_key: Option<Vec<PathKey>>,
         is_inverted: Option<bool>,
     },
     AstroportLpVault {
@@ -125,7 +117,7 @@ pub struct ConfigResponse {
 }
 
 // We define a custom struct for each query response
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct SourceInfoResponse {
     pub source: Source,
 }
@@ -150,4 +142,10 @@ pub struct PricesResponseElem {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct PricesResponse {
     pub prices: Vec<PricesResponseElem>,
+}
+
+#[cw_serde]
+pub enum PathKey {
+    Index(u64),
+    String(String),
 }

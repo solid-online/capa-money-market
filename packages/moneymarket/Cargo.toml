@@ -18,13 +18,15 @@ backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
 cw20 = "0.13.2"
-cosmwasm-bignumber = { path = "../bignumber"}
-astroport = { path = "../astroport"}
-terra-cosmwasm = { path = "../terra-cosmwasm"}
+cosmwasm-bignumber = { path = "../bignumber" }
+astroport = { path = "../astroport" }
+terra-cosmwasm = { path = "../terra-cosmwasm" }
 cosmwasm-storage = "1.0.0"
 cosmwasm-std = "1.0.0"
+cosmwasm-schema = { version = "1.1.0" }
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+rhaki-cw-plus = { workspace = true }
 
 
 [dev-dependencies]
