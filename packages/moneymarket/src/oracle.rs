@@ -1,13 +1,15 @@
 use cosmwasm_schema::cw_serde;
-use rhaki_cw_plus::utils::UpdateOption;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use cosmwasm_bignumber::math::Decimal256;
 
 use cosmwasm_std::{Addr, Empty, QueryRequest};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+/// Base precision of assets.
+///
+/// During the registration of a new `asset`, in case the `Soruce::Feeder`, subtract the `asset` precision with `BASE_PRECISION`
+pub const BASE_PRECISION: u8 = 6;
+
+#[cw_serde]
 pub struct InstantiateMsg {
     pub owner: String,
     pub base_asset: String,
@@ -34,8 +36,8 @@ pub enum ExecuteMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+
 pub enum QueryMsg {
     Config {},
     SourceInfo {
@@ -57,6 +59,7 @@ pub enum Source {
         feeder: Addr,
         price: Option<Decimal256>,
         last_updated_time: Option<u64>,
+        normalized_precision: u8,
     },
     OnChainQuery {
         base_asset: Option<String>,
@@ -77,6 +80,7 @@ pub enum Source {
 pub enum RegisterSource {
     Feeder {
         feeder: Addr,
+        precision: u8,
     },
     OnChainRate {
         base_asset: Option<String>,
@@ -95,6 +99,7 @@ pub enum RegisterSource {
 pub enum UpdateSource {
     Feeder {
         feeder: Addr,
+        precision: u8,
     },
     OnChainRate {
         base_asset: Option<UpdateOption<String>>,
@@ -110,7 +115,7 @@ pub enum UpdateSource {
 }
 
 // We define a custom struct for each query response
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct ConfigResponse {
     pub owner: String,
     pub base_asset: String,
@@ -123,7 +128,7 @@ pub struct SourceInfoResponse {
 }
 
 // We define a custom struct for each query response
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct PriceResponse {
     pub rate: Decimal256,
     pub last_updated_base: u64,
@@ -131,7 +136,7 @@ pub struct PriceResponse {
 }
 
 // We define a custom struct for each query response
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct PricesResponseElem {
     pub asset: String,
     pub price: Decimal256,
@@ -139,7 +144,7 @@ pub struct PricesResponseElem {
 }
 
 // We define a custom struct for each query response
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct PricesResponse {
     pub prices: Vec<PricesResponseElem>,
 }
@@ -148,4 +153,36 @@ pub struct PricesResponse {
 pub enum PathKey {
     Index(u64),
     String(String),
+}
+
+#[cw_serde]
+pub enum UpdateOption<T> {
+    ToNone,
+    Some(T),
+}
+
+impl<T: Clone> UpdateOption<T> {
+    pub fn into_option(&self) -> Option<T> {
+        match self {
+            UpdateOption::ToNone => None,
+            UpdateOption::Some(t) => Some(t.clone()),
+        }
+    }
+
+    pub fn unwrap(self) -> T {
+        match self {
+            UpdateOption::ToNone => panic!("Unwrap a None value"),
+            UpdateOption::Some(val) => val,
+        }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl<T> Into<Option<T>> for UpdateOption<T> {
+    fn into(self) -> Option<T> {
+        match self {
+            UpdateOption::ToNone => None,
+            UpdateOption::Some(val) => Some(val),
+        }
+    }
 }

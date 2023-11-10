@@ -1,8 +1,8 @@
 use cosmwasm_bignumber::math::Decimal256;
 use cosmwasm_std::{
-    attr, Addr, Attribute, DepsMut, Empty, Env, MessageInfo, QueryRequest, Response,
+    attr, Addr, Attribute, Decimal, DepsMut, Empty, Env, MessageInfo, QueryRequest, Response,
 };
-use moneymarket::oracle::{PathKey, RegisterSource, Source, UpdateSource};
+use moneymarket::oracle::{PathKey, RegisterSource, Source, UpdateSource, BASE_PRECISION};
 
 use crate::{
     error::ContractError,
@@ -47,7 +47,7 @@ pub fn run_register_asset(
     let mut attributes: Vec<Attribute> = vec![];
 
     match source {
-        RegisterSource::Feeder { feeder } => {
+        RegisterSource::Feeder { feeder, precision } => {
             ASSETS.save(
                 deps.storage,
                 asset.clone(),
@@ -55,6 +55,7 @@ pub fn run_register_asset(
                     feeder,
                     price: None,
                     last_updated_time: None,
+                    normalized_precision: precision - BASE_PRECISION,
                 },
             )?;
 
@@ -125,7 +126,7 @@ pub fn run_update_source(
                     last_updated_time,
                     ..
                 },
-                UpdateSource::Feeder { feeder },
+                UpdateSource::Feeder { feeder, precision },
             ) => {
                 ASSETS.save(
                     deps.storage,
@@ -134,6 +135,7 @@ pub fn run_update_source(
                         feeder,
                         price,
                         last_updated_time,
+                        normalized_precision: precision - BASE_PRECISION,
                     },
                 )?;
 
@@ -221,13 +223,23 @@ pub fn run_feed_prices(
 
         match ASSETS.load(deps.storage, asset.clone()) {
             Ok(source) => match source {
-                Source::Feeder { feeder, .. } => {
+                Source::Feeder {
+                    feeder,
+                    normalized_precision: precision,
+                    ..
+                } => {
                     if feeder != info.sender {
                         return Err(ContractError::Unauthorized {});
                     }
                     if price.is_zero() {
                         return Err(ContractError::NotValidZeroPrice {});
                     }
+
+                    let precision_mod: Decimal256 = Decimal::from_ratio(10_u128, 1_u128)
+                        .pow(precision as u32)
+                        .into();
+
+                    let price = price / precision_mod;
 
                     attributes.push(attr("asset", asset.to_string()));
                     attributes.push(attr("price", price.to_string()));
@@ -239,6 +251,7 @@ pub fn run_feed_prices(
                             feeder,
                             price: Some(price),
                             last_updated_time: Some(env.block.time.seconds()),
+                            normalized_precision: precision,
                         },
                     )?
                 }

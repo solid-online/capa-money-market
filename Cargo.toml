@@ -18,6 +18,3 @@ debug-assertions = false
 codegen-units = 1
 panic = 'abort'
 incremental = false
-
-[workspace.dependencies]
-rhaki-cw-plus = "0.6.4"
