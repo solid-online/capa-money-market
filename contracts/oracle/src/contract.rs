@@ -7,7 +7,7 @@ use crate::state::{Config, CONFIG};
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 
-use moneymarket::oracle::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use moneymarket::oracle::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 #[entry_point]
 pub fn instantiate(
@@ -20,11 +20,13 @@ pub fn instantiate(
         deps.storage,
         &Config {
             owner: deps.api.addr_validate(&msg.owner)?,
-            base_asset: msg.base_asset,
+            base_asset: msg.base_asset.clone(),
         },
     )?;
 
-    Ok(Response::default())
+    Ok(Response::default()
+        .add_attribute("owner", msg.owner)
+        .add_attribute("base_asset", msg.base_asset))
 }
 
 #[entry_point]
@@ -56,4 +58,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_binary(&query_prices(deps, env, start_after, limit).unwrap())
         }
     }
+}
+
+#[entry_point]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    Ok(Response::new())
 }

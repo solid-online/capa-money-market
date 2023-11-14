@@ -22,7 +22,7 @@ pub enum ExecuteMsg {
     },
 
     FeedPrice {
-        prices: Vec<(String, Decimal256)>, // (asset, price)
+        prices: Vec<FeedPriceInfo>, // (asset, price)
     },
 
     UpdateSource {
@@ -37,7 +37,6 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
-
 pub enum QueryMsg {
     Config {},
     SourceInfo {
@@ -51,6 +50,24 @@ pub enum QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+}
+
+#[cw_serde]
+pub struct MigrateMsg {}
+
+#[cw_serde]
+pub struct FeedPriceInfo {
+    pub asset_name: String,
+    pub price: Decimal256,
+}
+
+impl From<(String, Decimal256)> for FeedPriceInfo {
+    fn from(value: (String, Decimal256)) -> Self {
+        Self {
+            asset_name: value.0,
+            price: value.1,
+        }
+    }
 }
 
 #[cw_serde]

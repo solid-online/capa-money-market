@@ -9,7 +9,9 @@ use moneymarket::oracle::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, PathKey, PriceResponse, PricesResponse,
     PricesResponseElem, QueryMsg, RegisterSource, UpdateSource,
 };
-use rhaki_cw_mock_http_querier::mock::{HttpWasmMockQuerier, DefaultWasmMockQuerier, create_http_mock};
+use rhaki_cw_mock_http_querier::mock::{
+    create_http_mock, DefaultWasmMockQuerier, HttpWasmMockQuerier,
+};
 use std::str::FromStr;
 
 use super::mock_querier::{oracle_mock_dependencies, AvaiableQueries, PoolStruct};
@@ -106,7 +108,7 @@ fn update_source() {
     // Feed prices
     let env = mock_env();
     let msg = ExecuteMsg::FeedPrice {
-        prices: vec![("uluna".to_string(), price_luna)],
+        prices: vec![("uluna".to_string(), price_luna).into()],
     };
 
     let info = mock_info("feeder0000", &[]);
@@ -160,7 +162,7 @@ fn update_source() {
     let price_luna = Decimal256::from_str("3").unwrap();
 
     let msg = ExecuteMsg::FeedPrice {
-        prices: vec![("uluna".to_string(), price_luna)],
+        prices: vec![("uluna".to_string(), price_luna).into()],
     };
 
     let info = mock_info("feeder0001", &[]);
@@ -233,9 +235,9 @@ fn feed_price() {
     let env = mock_env();
     let msg = ExecuteMsg::FeedPrice {
         prices: vec![
-            ("mAAPL".to_string(), Decimal256::from_str("1.5").unwrap()),
-            ("mGOGL".to_string(), Decimal256::from_str("3").unwrap()),
-            ("mBTC".to_string(), Decimal256::from_str("3.75").unwrap()),
+            ("mAAPL".to_string(), Decimal256::from_str("1.5").unwrap()).into(),
+            ("mGOGL".to_string(), Decimal256::from_str("3").unwrap()).into(),
+            ("mBTC".to_string(), Decimal256::from_str("3.75").unwrap()).into(),
         ],
     };
     let _res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
@@ -337,8 +339,8 @@ fn feed_price() {
     // Zero price feeder try
     let msg = ExecuteMsg::FeedPrice {
         prices: vec![
-            ("mAAPL".to_string(), Decimal256::from_str("0").unwrap()),
-            ("mGOGL".to_string(), Decimal256::from_str("2.2").unwrap()),
+            ("mAAPL".to_string(), Decimal256::from_str("0").unwrap()).into(),
+            ("mGOGL".to_string(), Decimal256::from_str("2.2").unwrap()).into(),
         ],
     };
 
@@ -351,7 +353,7 @@ fn feed_price() {
     // Unauthorized try
     let info = mock_info("addr0001", &[]);
     let msg = ExecuteMsg::FeedPrice {
-        prices: vec![("mAAPL".to_string(), Decimal256::from_str("1.2").unwrap())],
+        prices: vec![("mAAPL".to_string(), Decimal256::from_str("1.2").unwrap()).into()],
     };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg);
@@ -405,8 +407,8 @@ fn lsd_price() {
     let env = mock_env();
     let msg = ExecuteMsg::FeedPrice {
         prices: vec![
-            ("uluna".to_string(), Decimal256::from_str("1.5").unwrap()),
-            ("usdc".to_string(), Decimal256::from_str("1").unwrap()),
+            ("uluna".to_string(), Decimal256::from_str("1.5").unwrap()).into(),
+            ("usdc".to_string(), Decimal256::from_str("1").unwrap()).into(),
         ],
     };
     let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -534,78 +536,78 @@ fn lsd_price() {
 
 #[test]
 fn lsd_price_http() {
-        let mut deps: OwnedDeps<_, _, HttpWasmMockQuerier<DefaultWasmMockQuerier>> =
-            create_http_mock(None, PULBLIC_NODE_URL, None);
+    let mut deps: OwnedDeps<_, _, HttpWasmMockQuerier<DefaultWasmMockQuerier>> =
+        create_http_mock(None, PULBLIC_NODE_URL, None);
 
-        let msg = InstantiateMsg {
-            owner: "owner0000".to_string(),
-            base_asset: "base0000".to_string(),
-        };
+    let msg = InstantiateMsg {
+        owner: "owner0000".to_string(),
+        base_asset: "base0000".to_string(),
+    };
 
-        let info = mock_info("addr0000", &[]);
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+    let info = mock_info("addr0000", &[]);
+    let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        // Register asset and feeder for uluna
-        let msg = ExecuteMsg::RegisterAsset {
-            asset: "uluna".to_string(),
-            source: RegisterSource::Feeder {
-                feeder: Addr::unchecked("feeder0000".to_string()),
-                precision: 6,
-            },
-        };
-        let info = mock_info("owner0000", &[]);
-        let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+    // Register asset and feeder for uluna
+    let msg = ExecuteMsg::RegisterAsset {
+        asset: "uluna".to_string(),
+        source: RegisterSource::Feeder {
+            feeder: Addr::unchecked("feeder0000".to_string()),
+            precision: 6,
+        },
+    };
+    let info = mock_info("owner0000", &[]);
+    let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        // Register asset and feeder for usdc
-        let msg = ExecuteMsg::RegisterAsset {
-            asset: "usdc".to_string(),
-            source: RegisterSource::Feeder {
-                feeder: Addr::unchecked("feeder0000".to_string()),
-                precision: 6,
-            },
-        };
-        let info = mock_info("owner0000", &[]);
-        let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+    // Register asset and feeder for usdc
+    let msg = ExecuteMsg::RegisterAsset {
+        asset: "usdc".to_string(),
+        source: RegisterSource::Feeder {
+            feeder: Addr::unchecked("feeder0000".to_string()),
+            precision: 6,
+        },
+    };
+    let info = mock_info("owner0000", &[]);
+    let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        // Feed prices
-        let info = mock_info("feeder0000", &[]);
-        let env = mock_env();
-        let msg = ExecuteMsg::FeedPrice {
-            prices: vec![
-                ("uluna".to_string(), Decimal256::from_str("1.5").unwrap()),
-                ("usdc".to_string(), Decimal256::from_str("1").unwrap()),
-            ],
-        };
-        let _res = execute(deps.as_mut(), env, info, msg).unwrap();
+    // Feed prices
+    let info = mock_info("feeder0000", &[]);
+    let env = mock_env();
+    let msg = ExecuteMsg::FeedPrice {
+        prices: vec![
+            ("uluna".to_string(), Decimal256::from_str("1.5").unwrap()).into(),
+            ("usdc".to_string(), Decimal256::from_str("1").unwrap()).into(),
+        ],
+    };
+    let _res = execute(deps.as_mut(), env, info, msg).unwrap();
 
-        // Register asset and feeder for ampLuna
-        let msg = ExecuteMsg::RegisterAsset {
-            asset: "terra1ecgazyd0waaj3g7l9cmy5gulhxkps2gmxu9ghducvuypjq68mq2s5lvsct".to_string(),
-            source: RegisterSource::OnChainRate {
-                base_asset: Some("uluna".to_string()),
-                query: QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
-                    contract_addr: "terra10788fkzah89xrdm27zkj5yvhj9x3494lxawzm5qq3vvxcqz2yzaqyd3enk"
-                        .to_string(),
-                    msg: to_binary(&AvaiableQueries::State {}).unwrap(),
-                }),
-                path_key: vec![PathKey::String("exchange_rate".to_string())],
-                is_inverted: false,
-            },
-        };
+    // Register asset and feeder for ampLuna
+    let msg = ExecuteMsg::RegisterAsset {
+        asset: "terra1ecgazyd0waaj3g7l9cmy5gulhxkps2gmxu9ghducvuypjq68mq2s5lvsct".to_string(),
+        source: RegisterSource::OnChainRate {
+            base_asset: Some("uluna".to_string()),
+            query: QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
+                contract_addr: "terra10788fkzah89xrdm27zkj5yvhj9x3494lxawzm5qq3vvxcqz2yzaqyd3enk"
+                    .to_string(),
+                msg: to_binary(&AvaiableQueries::State {}).unwrap(),
+            }),
+            path_key: vec![PathKey::String("exchange_rate".to_string())],
+            is_inverted: false,
+        },
+    };
 
-        let info = mock_info("owner0000", &[]);
-        let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+    let info = mock_info("owner0000", &[]);
+    let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        // Get the price
+    // Get the price
 
-        let msg = QueryMsg::Price {
-            base: "terra1ecgazyd0waaj3g7l9cmy5gulhxkps2gmxu9ghducvuypjq68mq2s5lvsct".to_string(),
-            quote: "base0000".to_string(),
-        };
+    let msg = QueryMsg::Price {
+        base: "terra1ecgazyd0waaj3g7l9cmy5gulhxkps2gmxu9ghducvuypjq68mq2s5lvsct".to_string(),
+        quote: "base0000".to_string(),
+    };
 
-        let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+    let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
-        println!("{:?}", res);
+    println!("{:?}", res);
 }
 
 #[test]
@@ -738,9 +740,9 @@ fn astroport_lp_vault() {
     let env = mock_env();
     let msg = ExecuteMsg::FeedPrice {
         prices: vec![
-            ("uluna".to_string(), price_luna),
-            ("usdc".to_string(), price_usdc),
-            ("uatom".to_string(), price_atom),
+            ("uluna".to_string(), price_luna).into(),
+            ("usdc".to_string(), price_usdc).into(),
+            ("uatom".to_string(), price_atom).into(),
         ],
     };
 
@@ -885,7 +887,7 @@ fn astroport_lp_vault_http() {
     // Feed prices
     let env = mock_env();
     let msg = ExecuteMsg::FeedPrice {
-        prices: vec![(usdc, price_luna), (uluna, price_usdc)],
+        prices: vec![(usdc, price_luna).into(), (uluna, price_usdc).into()],
     };
 
     let info = mock_info("feeder0000", &[]);

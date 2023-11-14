@@ -2,7 +2,9 @@ use cosmwasm_bignumber::math::Decimal256;
 use cosmwasm_std::{
     attr, Addr, Attribute, Decimal, DepsMut, Empty, Env, MessageInfo, QueryRequest, Response,
 };
-use moneymarket::oracle::{PathKey, RegisterSource, Source, UpdateSource, BASE_PRECISION};
+use moneymarket::oracle::{
+    FeedPriceInfo, PathKey, RegisterSource, Source, UpdateSource, BASE_PRECISION,
+};
 
 use crate::{
     error::ContractError,
@@ -214,14 +216,11 @@ pub fn run_feed_prices(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    prices: Vec<(String, Decimal256)>,
+    feed_infos: Vec<FeedPriceInfo>,
 ) -> Result<Response, ContractError> {
     let mut attributes = vec![attr("action", "feed_prices")];
-    for price in prices {
-        let asset: String = price.0;
-        let price: Decimal256 = price.1;
-
-        match ASSETS.load(deps.storage, asset.clone()) {
+    for feed_info in feed_infos {
+        match ASSETS.load(deps.storage, feed_info.asset_name.clone()) {
             Ok(source) => match source {
                 Source::Feeder {
                     feeder,
@@ -231,7 +230,7 @@ pub fn run_feed_prices(
                     if feeder != info.sender {
                         return Err(ContractError::Unauthorized {});
                     }
-                    if price.is_zero() {
+                    if feed_info.price.is_zero() {
                         return Err(ContractError::NotValidZeroPrice {});
                     }
 
@@ -239,14 +238,14 @@ pub fn run_feed_prices(
                         .pow(precision as u32)
                         .into();
 
-                    let price = price / precision_mod;
+                    let price = feed_info.price / precision_mod;
 
-                    attributes.push(attr("asset", asset.to_string()));
+                    attributes.push(attr("asset", feed_info.asset_name.to_string()));
                     attributes.push(attr("price", price.to_string()));
 
                     ASSETS.save(
                         deps.storage,
-                        asset,
+                        feed_info.asset_name,
                         &Source::Feeder {
                             feeder,
                             price: Some(price),
@@ -256,9 +255,17 @@ pub fn run_feed_prices(
                     )?
                 }
                 #[allow(unreachable_patterns)]
-                _ => return Err(ContractError::SourceIsNotFeeder { asset }),
+                _ => {
+                    return Err(ContractError::SourceIsNotFeeder {
+                        asset: feed_info.asset_name,
+                    })
+                }
             },
-            Err(_) => return Err(ContractError::AssetIsNotWhitelisted { asset }),
+            Err(_) => {
+                return Err(ContractError::AssetIsNotWhitelisted {
+                    asset: feed_info.asset_name,
+                })
+            }
         }
     }
 
