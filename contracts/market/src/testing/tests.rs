@@ -343,7 +343,8 @@ fn borrow_stable() {
         vec![
             attr("action", "borrow_stable"),
             attr("borrower", "addr0000"),
-            attr("borrow_amount", "500000")
+            attr("borrow_amount", "500000"),
+            attr("mint_fee", "2500")
         ]
     );
 
@@ -1264,8 +1265,10 @@ fn flash_mint() {
     let res = execute(deps.as_mut(), env, info, msg).unwrap();
 
     // Msgs that should be retrive
+    let mut messages: Vec<SubMsg> = vec![];
+
     // insert msg burn
-    let mut messages: Vec<SubMsg> = vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+    messages.push(SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: String::from("solid"),
         funds: vec![],
         msg: to_binary(&Cw20ExecuteMsg::BurnFrom {
@@ -1273,7 +1276,7 @@ fn flash_mint() {
             amount: amount_flash_mint.into(),
         })
         .unwrap(),
-    }))];
+    })));
 
     // insert msg fee transfer to collector only if fee_amount > 0 (flash_mint_fee could be 0)
     if flash_mint_fee_amount > Uint256::zero() {

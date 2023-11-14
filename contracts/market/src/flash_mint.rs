@@ -74,15 +74,17 @@ pub fn private_flash_end(
 
     let config = read_config(deps.storage)?;
 
+    let mut messages: Vec<CosmosMsg> = vec![];
+
     // Insert msg burn
-    let mut messages: Vec<CosmosMsg> = vec![CosmosMsg::Wasm(WasmMsg::Execute {
+    messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: config.stable_contract.to_string(),
         funds: vec![],
         msg: to_binary(&Cw20ExecuteMsg::BurnFrom {
             owner: flash_minter.to_string(),
             amount: burn_amount.into(),
         })?,
-    })];
+    }));
 
     // Insert msg fee transfer to collector only if fee_amount > 0
     if fee_amount > Uint256::zero() {
