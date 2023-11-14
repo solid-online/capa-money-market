@@ -16,3 +16,5 @@ contracts/stride_wrapper
 .idea
 
 artifacts
+
+.vscode

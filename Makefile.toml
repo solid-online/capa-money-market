@@ -1,0 +1,141 @@
+
+[config]
+default_to_workspace = false
+
+[env]
+# Directory with wasm files used by integration tests (another directory can be used instead, for example 'artifacts' from rust-optimizer)
+ARTIFACTS_DIR_PATH = "target/wasm32-unknown-unknown/release"
+# If you bump this version, verify RUST_VERSION correctness
+RUST_OPTIMIZER_VERSION = "0.14.0"
+# Use rust version from rust-optimizer Dockerfile (see https://github.com/CosmWasm/rust-optimizer/blob/main/Dockerfile#L1)
+# to be sure that we compile / test against the same version
+RUST_VERSION = "1.69.0"
+
+[tasks.add-contract]
+script = '''
+python3 "$(pwd)"/template/add_template.py
+'''
+
+[tasks.install-stable]
+script = '''
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
+rustup target add wasm32-unknown-unknown --toolchain ${RUST_VERSION}
+rustup component add rustfmt --toolchain ${RUST_VERSION}
+rustup component add clippy --toolchain ${RUST_VERSION}
+rustup component add llvm-tools-preview --toolchain ${RUST_VERSION}
+'''
+
+[tasks.install-nightly]
+script = '''
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain nightly
+rustup target add wasm32-unknown-unknown --toolchain nightly
+rustup component add rustfmt --toolchain nightly
+'''
+
+[tasks.build]
+toolchain = "${RUST_VERSION}"
+command = "cargo"
+args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked"]
+
+[tasks.rust-optimizer]
+script = """
+if [[ $(arch) == "arm64" ]]; then
+  image="cosmwasm/workspace-optimizer-arm64:${RUST_OPTIMIZER_VERSION}"
+else
+  image="cosmwasm/workspace-optimizer:${RUST_OPTIMIZER_VERSION}"
+fi
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  ${image}
+"""
+
+[tasks.test]
+toolchain = "${RUST_VERSION}"
+command = "cargo"
+args = ["test", "--locked"]
+
+[tasks.fmt]
+toolchain = "nightly"
+command = "cargo"
+args = ["fmt", "--all", "--check"]
+
+[tasks.clippy]
+toolchain = "${RUST_VERSION}"
+command = "cargo"
+args = ["clippy", "--tests", "--", "-D", "warnings"]
+
+[tasks.audit]
+toolchain = "${RUST_VERSION}"
+command = "cargo"
+args = ["audit"]
+
+[tasks.coverage-html]
+alias = "coverage-grcov-html"
+
+[tasks.coverage-lcov]
+alias = "coverage-grcov-lcov"
+
+[tasks.all-actions]
+dependencies = [
+  "install-stable",
+  "install-nightly",
+  "fmt",
+  "clippy",
+  "build",
+  "test",
+  "audit",
+  "generate-all-schemas",
+  "rust-optimizer",
+]
+
+[tasks.generate-all-schemas]
+script_runner = "@rust"
+script = '''
+use std::fs;
+use std::process::Command;
+
+fn main() -> std::io::Result<()> {
+    fs::remove_dir_all("schemas");
+    fs::create_dir("schemas")?;
+    println!("Done");
+
+    let contracts = vec![
+        "grid-terra",
+        "variable-provider",
+    ];
+
+    for contract in contracts {
+        println!("{}", contract);
+
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("--package")
+            .arg(contract)
+            .arg("--bin")
+            .arg("schema")
+            .output()
+            .expect("failed to execute process");
+
+        println!("status: {}", output.status);
+        println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+        println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+
+        fs::create_dir(format!("schemas/{}", contract))?;
+
+        fs::rename(
+            format!("schema/{}.json", contract),
+            format!("schemas/{}/{}.json", contract, contract),
+        )?;
+
+        fs::rename(
+            format!("schema/raw", ),
+            format!("schemas/{}/raw", contract),
+        )?;
+    }
+
+    fs::remove_dir_all("schema");
+
+    Ok(())
+}
+'''

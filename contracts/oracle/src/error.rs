@@ -15,9 +15,21 @@ pub enum ContractError {
     #[error("Asset already whitelisted")]
     AssetAlreadyWhitelisted {},
 
-    #[error("Asset is not whitelisted")]
-    AssetIsNotWhitelisted {},
+    #[error("Asset {asset:?} is not whitelisted")]
+    AssetIsNotWhitelisted { asset: String },
 
     #[error("Zero Price is not allowed")]
     NotValidZeroPrice {},
+
+    #[error("Price source is not feeder for asset {asset:?}")]
+    SourceIsNotFeeder { asset: String },
+
+    #[error("Price has never been feeded")]
+    PriceNeverFeeded {},
+
+    #[error("Wrong price source")]
+    WrongPriceSource {},
+
+    #[error("Pool must have two assets")]
+    PoolInvalidAssetsLenght {},
 }

@@ -1,6 +1,10 @@
+#[cfg(not(feature = "library"))]
 pub mod contract;
-pub mod error;
-pub mod state;
+mod error;
+mod execute;
+mod functions;
+mod query;
+mod state;
 
 #[cfg(test)]
-mod tests;
+mod testing;
