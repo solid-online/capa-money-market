@@ -97,6 +97,7 @@ pub enum Source {
 pub enum RegisterSource {
     Feeder {
         feeder: String,
+
         precision: u8,
     },
     OnChainRate {

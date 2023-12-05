@@ -2,6 +2,7 @@ use cosmwasm_bignumber::math::Decimal256;
 use cosmwasm_std::{
     attr, Addr, Attribute, Decimal, DepsMut, Empty, Env, MessageInfo, QueryRequest, Response,
     StdError,
+
 };
 use moneymarket::oracle::{
     FeedPriceInfo, PathKey, RegisterSource, Source, UpdateSource, BASE_PRECISION,
@@ -23,6 +24,7 @@ pub fn run_update_config(
         return Err(ContractError::Unauthorized {});
     }
 
+
     let mut attrs: Vec<Attribute> = vec![attr("action", "update_config")];
 
     if let Some(owner) = owner {
@@ -36,6 +38,7 @@ pub fn run_update_config(
 
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::default().add_attributes(attrs))
+
 }
 
 pub fn run_register_asset(
@@ -63,6 +66,7 @@ pub fn run_register_asset(
                 asset.clone(),
                 &Source::Feeder {
                     feeder: deps.api.addr_validate(&feeder)?,
+
                     price: None,
                     last_updated_time: None,
                     normalized_precision: precision - BASE_PRECISION,

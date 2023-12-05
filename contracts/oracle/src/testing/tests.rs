@@ -98,6 +98,7 @@ fn update_source() {
         asset: "uluna".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -204,6 +205,7 @@ fn feed_price() {
         asset: "mAAPL".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 18,
         },
     };
@@ -215,6 +217,7 @@ fn feed_price() {
         asset: "mGOGL".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -225,6 +228,7 @@ fn feed_price() {
         asset: "mBTC".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 8,
         },
     };
@@ -385,6 +389,7 @@ fn lsd_price() {
         asset: "uluna".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -396,6 +401,7 @@ fn lsd_price() {
         asset: "usdc".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -552,6 +558,7 @@ fn lsd_price_http() {
         asset: "uluna".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -563,6 +570,7 @@ fn lsd_price_http() {
         asset: "usdc".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -700,6 +708,7 @@ fn astroport_lp_vault() {
         asset: "uluna".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -717,6 +726,7 @@ fn astroport_lp_vault() {
         asset: "usdc".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -729,6 +739,7 @@ fn astroport_lp_vault() {
         asset: "uatom".to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -865,6 +876,7 @@ fn astroport_lp_vault_http() {
         asset: uluna.to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -877,6 +889,7 @@ fn astroport_lp_vault_http() {
         asset: usdc.to_string(),
         source: RegisterSource::Feeder {
             feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
