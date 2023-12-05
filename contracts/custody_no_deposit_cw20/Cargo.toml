@@ -1,9 +1,9 @@
 [package]
-name = "moneymarket-custody-cw20"
+name = "moneymarket-custody-lunax"
 version = "0.0.0"
 authors = ["BIG Labs, Terraform Labs PTE, Capapult PTE"]
 edition = "2018"
-description = "A MoneyMarket cw20 custody contract - handles over collateral operations"
+description = "A MoneyMarket lunax custody contract - handles over collateral operations"
 license = "MIT"
 
 exclude = [
