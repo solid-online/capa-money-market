@@ -111,6 +111,7 @@ pub fn execute(
             base_borrow_fee,
             fee_increase_factor,
             flash_mint_fee,
+            oracle_addr,
         } => {
             let api = deps.api;
             update_config(
@@ -121,6 +122,7 @@ pub fn execute(
                 base_borrow_fee,
                 fee_increase_factor,
                 flash_mint_fee,
+                oracle_addr
             )
         }
 
@@ -255,6 +257,7 @@ pub fn update_config(
     base_borrow_fee: Option<Decimal256>,
     fee_increase_factor: Option<Decimal256>,
     flash_mint_fee: Option<Decimal256>,
+    oracle_addr: Option<String>
 ) -> Result<Response, ContractError> {
     let mut config: Config = read_config(deps.storage)?;
 
@@ -279,6 +282,10 @@ pub fn update_config(
 
     if let Some(fee_increase_factor) = fee_increase_factor {
         config.fee_increase_factor = fee_increase_factor
+    }
+
+    if let Some(oracle_addr) = oracle_addr {
+        config.oracle_contract = deps.api.addr_validate(&oracle_addr.as_str())?;
     }
 
     if let Some(flash_mint_fee) = flash_mint_fee {

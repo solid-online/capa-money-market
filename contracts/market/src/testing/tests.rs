@@ -202,6 +202,7 @@ fn update_config() {
         base_borrow_fee: Some(Decimal256::from_str("0.006").unwrap()),
         fee_increase_factor: Some(Decimal256::from_str("2").unwrap()),
         flash_mint_fee: None,
+        oracle_addr: None
     };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -220,6 +221,7 @@ fn update_config() {
         base_borrow_fee: None,
         fee_increase_factor: None,
         flash_mint_fee: None,
+        oracle_addr: Some("neworacle".to_string())
     };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -230,6 +232,7 @@ fn update_config() {
     let config_res: ConfigResponse = from_binary(&res).unwrap();
     assert_eq!("owner1".to_string(), config_res.owner_addr);
     assert_eq!("liquidation2".to_string(), config_res.liquidation_contract);
+    assert_eq!("neworacle".to_string(), config_res.oracle_contract);
 
     // Unauthorized err
     let info = mock_info("owner", &[]);
@@ -239,6 +242,7 @@ fn update_config() {
         base_borrow_fee: None,
         fee_increase_factor: None,
         flash_mint_fee: None,
+        oracle_addr: None
     };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg);
@@ -1179,6 +1183,7 @@ fn flash_mint() {
         base_borrow_fee: None,
         fee_increase_factor: None,
         flash_mint_fee: Some(flash_mint_fee),
+        oracle_addr: None
     };
     let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
