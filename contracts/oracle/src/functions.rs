@@ -42,7 +42,6 @@ pub fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, Contr
             path_key,
             is_inverted,
         } => {
-            // let base_asset_price_info = get_price(deps, env, base_asset)?;
             let res: Value = deps.querier.query(&query)?;
 
             let mut value = &res;

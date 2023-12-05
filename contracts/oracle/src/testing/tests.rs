@@ -97,7 +97,8 @@ fn update_source() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "uluna".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -203,7 +204,8 @@ fn feed_price() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "mAAPL".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 18,
         },
     };
@@ -214,7 +216,8 @@ fn feed_price() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "mGOGL".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -224,7 +227,8 @@ fn feed_price() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "mBTC".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 8,
         },
     };
@@ -384,7 +388,8 @@ fn lsd_price() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "uluna".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -395,7 +400,8 @@ fn lsd_price() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "usdc".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -551,7 +557,8 @@ fn lsd_price_http() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "uluna".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -562,7 +569,8 @@ fn lsd_price_http() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "usdc".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -699,7 +707,8 @@ fn astroport_lp_vault() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "uluna".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -716,7 +725,8 @@ fn astroport_lp_vault() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "usdc".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -728,7 +738,8 @@ fn astroport_lp_vault() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: "uatom".to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -864,7 +875,8 @@ fn astroport_lp_vault_http() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: uluna.to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };
@@ -876,7 +888,8 @@ fn astroport_lp_vault_http() {
     let msg = ExecuteMsg::RegisterAsset {
         asset: usdc.to_string(),
         source: RegisterSource::Feeder {
-            feeder: Addr::unchecked("feeder0000".to_string()),
+            feeder: "feeder0000".to_string(),
+
             precision: 6,
         },
     };

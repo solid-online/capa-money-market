@@ -96,7 +96,8 @@ pub enum Source {
 #[cw_serde]
 pub enum RegisterSource {
     Feeder {
-        feeder: Addr,
+        feeder: String,
+
         precision: u8,
     },
     OnChainRate {
