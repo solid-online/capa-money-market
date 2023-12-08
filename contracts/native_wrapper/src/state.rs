@@ -18,6 +18,7 @@ pub struct Config {
 pub struct State {
     pub total_bond: Uint128,
     pub total_supply: Uint128,
+    pub exchange_rate: Uint128
 }
 
 pub fn store_config(storage: &mut dyn Storage, data: &Config) -> StdResult<()> {

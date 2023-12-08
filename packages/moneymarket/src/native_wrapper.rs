@@ -61,6 +61,7 @@ pub struct ConfigResponse {
 pub struct StateResponse {
     pub total_bond: Uint128,
     pub total_supply: Uint128,
+    pub exchange_rate: Uint128,
 }
 
 // We define a custom struct for each query response

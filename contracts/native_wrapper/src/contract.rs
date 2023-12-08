@@ -41,6 +41,7 @@ pub fn instantiate(
         &State {
             total_bond: Uint128::zero(),
             total_supply: Uint128::zero(),
+            exchange_rate: Uint128::one(),
         },
     )?;
 
@@ -193,6 +194,7 @@ pub fn query_state(deps: Deps) -> StdResult<StateResponse> {
     Ok(StateResponse {
         total_bond: state.total_bond,
         total_supply: state.total_supply,
+        exchange_rate: state.exchange_rate
     })
 }
 

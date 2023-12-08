@@ -1,5 +1,5 @@
 [package]
-name = "moneymarket-custody-lunax"
+name = "moneymarket-custody-no-deposit"
 version = "0.0.0"
 authors = ["BIG Labs, Terraform Labs PTE, Capapult PTE"]
 edition = "2018"
