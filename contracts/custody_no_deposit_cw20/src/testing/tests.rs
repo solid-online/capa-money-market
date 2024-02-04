@@ -100,7 +100,7 @@ fn deposit_collateral() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::DepositCollateral {}).unwrap(),
+        msg: to_binary(&Cw20HookMsg::DepositCollateral {to: None}).unwrap(),
     });
 
     // failed; cannot directly execute receive message
