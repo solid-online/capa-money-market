@@ -108,7 +108,7 @@ pub fn execute(
                 max_ltv,
             )
         }
-        ExecuteMsg::LockCollateral { collaterals } => lock_collateral(deps, info, collaterals),
+        ExecuteMsg::LockCollateral { collaterals, to } => lock_collateral(deps, info, to, collaterals),
         ExecuteMsg::UnlockCollateral { collaterals } => {
             unlock_collateral(deps, env, info, collaterals)
         }

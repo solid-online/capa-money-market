@@ -22,14 +22,16 @@ use moneymarket::tokens::{Tokens, TokensHuman, TokensMath, TokensToHuman, Tokens
 pub fn lock_collateral(
     deps: DepsMut,
     info: MessageInfo,
+    to: Option<String>,
     collaterals_human: TokensHuman,
 ) -> Result<Response, ContractError> {
-    let mut cur_collaterals: Tokens = read_collaterals(deps.storage, &info.sender);
+    let sender = deps.api.addr_validate(&to.unwrap_or("".to_string())).unwrap_or(info.sender);
+    let mut cur_collaterals: Tokens = read_collaterals(deps.storage, &sender);
 
     let collaterals: Tokens = collaterals_human.to_raw(deps.as_ref())?;
 
     cur_collaterals.add(collaterals.clone());
-    store_collaterals(deps.storage, &info.sender, &cur_collaterals)?;
+    store_collaterals(deps.storage, &sender, &cur_collaterals)?;
 
     let mut messages: Vec<CosmosMsg> = vec![];
     for collateral in collaterals {
@@ -38,7 +40,7 @@ pub fn lock_collateral(
             contract_addr: whitelist_elem.custody_contract.to_string(),
             funds: vec![],
             msg: to_binary(&CustodyExecuteMsg::LockCollateral {
-                borrower: info.sender.to_string(),
+                borrower: sender.to_string(),
                 amount: collateral.1,
             })?,
         }));
@@ -52,7 +54,7 @@ pub fn lock_collateral(
 
     Ok(Response::new().add_messages(messages).add_attributes(vec![
         attr("action", "lock_collateral"),
-        attr("borrower", info.sender),
+        attr("borrower", sender),
         attr("collaterals", collateral_logs.join(",")),
     ]))
 }
