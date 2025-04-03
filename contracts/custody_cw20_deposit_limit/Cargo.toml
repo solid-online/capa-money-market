@@ -1,5 +1,5 @@
 [package]
-name = "moneymarket-custody-cw20-copia"
+name = "moneymarket-custody-cw20-deposit_limit"
 version = "0.0.0"
 authors = ["BIG Labs, Terraform Labs PTE, Capapult PTE"]
 edition = "2018"
