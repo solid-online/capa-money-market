@@ -12,21 +12,20 @@ use crate::collateral::{
 };
 use crate::error::ContractError;
 use crate::state::{
-    read_config, store_config, store_contract_balance_info, Config, ContractBalanceInfo,
+    read_config, read_contract_balance_info, store_config, store_contract_balance_info, Config,
+    ContractBalanceInfo, CustodyInstantiateMsg, CustomConfigResponse,
 };
 
 use cw20::Cw20ReceiveMsg;
 use moneymarket::common::optional_addr_validate;
-use moneymarket::custody::{
-    ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
-};
+use moneymarket::custody::{ Cw20HookMsg, ExecuteMsg, MigrateMsg, QueryMsg};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    msg: InstantiateMsg,
+    msg: CustodyInstantiateMsg,
 ) -> Result<Response, ContractError> {
     let config = Config {
         owner: deps.api.addr_validate(&msg.owner)?,
@@ -35,6 +34,7 @@ pub fn instantiate(
         market_contract: deps.api.addr_validate(&msg.market_contract)?,
         liquidation_contract: deps.api.addr_validate(&msg.liquidation_contract)?,
         collector_contract: deps.api.addr_validate(&msg.collector_contract)?,
+        max_deposit: msg.max_deposit,
     };
 
     let contract_balance_info = ContractBalanceInfo {
@@ -60,6 +60,7 @@ pub fn execute(
             owner,
             liquidation_contract,
             collector_contract,
+            max_deposit,
         } => {
             let api = deps.api;
             update_config(
@@ -68,6 +69,7 @@ pub fn execute(
                 optional_addr_validate(api, owner)?,
                 optional_addr_validate(api, liquidation_contract)?,
                 optional_addr_validate(api, collector_contract)?,
+                max_deposit,
             )
         }
         ExecuteMsg::LockCollateral { borrower, amount } => {
@@ -107,7 +109,7 @@ pub fn receive_cw20(
             }
 
             let cw20_sender_addr = deps.api.addr_validate(&cw20_msg.sender)?;
-            deposit_collateral(deps, cw20_sender_addr, cw20_msg.amount.into())
+            deposit_collateral(deps, cw20_sender_addr, cw20_msg.amount.into() , config)
         }
         _ => Err(ContractError::MissingDepositCollateralHook {}),
     }
@@ -119,8 +121,10 @@ pub fn update_config(
     owner: Option<Addr>,
     liquidation_contract: Option<Addr>,
     collector_contract: Option<Addr>,
+    max_deposit: Option<Uint256>,
 ) -> Result<Response, ContractError> {
     let mut config: Config = read_config(deps.storage)?;
+    let contract_balance = read_contract_balance_info(deps.storage)?;
 
     if info.sender != config.owner {
         return Err(ContractError::Unauthorized {});
@@ -136,6 +140,15 @@ pub fn update_config(
 
     if let Some(collector_contract) = collector_contract {
         config.collector_contract = deps.api.addr_validate(collector_contract.as_str())?;
+    }
+
+    if let Some(max_deposit) = max_deposit {
+        if contract_balance.balance > max_deposit {
+            return Err(ContractError::InvalidMaxDeposit(
+                contract_balance.balance.into(),
+            ));
+        }
+        config.max_deposit = max_deposit;
     }
 
     store_config(deps.storage, &config)?;
@@ -158,15 +171,16 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+pub fn query_config(deps: Deps) -> StdResult<CustomConfigResponse> {
     let config: Config = read_config(deps.storage)?;
-    Ok(ConfigResponse {
+    Ok(CustomConfigResponse {
         owner: config.owner.to_string(),
         collateral_token: config.collateral_token.to_string(),
         overseer_contract: config.overseer_contract.to_string(),
         market_contract: config.market_contract.to_string(),
         liquidation_contract: config.liquidation_contract.to_string(),
         collector_contract: config.collector_contract.to_string(),
+        max_deposit: config.max_deposit,
     })
 }
 

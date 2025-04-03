@@ -19,11 +19,21 @@ pub fn deposit_collateral(
     deps: DepsMut,
     borrower: Addr,
     amount: Uint256,
+    config: Config,
 ) -> Result<Response, ContractError> {
     let borrower_validated = deps.api.addr_validate(borrower.as_str())?;
     let mut borrower_info: BorrowerInfo = read_borrower_info(deps.storage, &borrower_validated);
 
     let mut contract_balance_info: ContractBalanceInfo = read_contract_balance_info(deps.storage)?;
+    let total_balance = contract_balance_info.balance + amount;
+
+    // Check if the amount is greater than the max deposit limit
+    if total_balance > config.max_deposit {
+        return Err(ContractError::InvalidDepositLimit(
+            amount.into(),
+            config.max_deposit.into(),
+        ));
+    }
 
     // Update borrower LunaX balance
     borrower_info.balance += amount;

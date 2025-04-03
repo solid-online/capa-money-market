@@ -60,6 +60,7 @@ pub fn execute(
             owner,
             liquidation_contract,
             collector_contract,
+            max_deposit
         } => {
             let api = deps.api;
             update_config(
@@ -68,6 +69,7 @@ pub fn execute(
                 optional_addr_validate(api, owner)?,
                 optional_addr_validate(api, liquidation_contract)?,
                 optional_addr_validate(api, collector_contract)?,
+                max_deposit,
             )
         }
         ExecuteMsg::LockCollateral { borrower, amount } => {
@@ -119,6 +121,7 @@ pub fn update_config(
     owner: Option<Addr>,
     liquidation_contract: Option<Addr>,
     collector_contract: Option<Addr>,
+    _max_deposit: Option<Uint256>,
 ) -> Result<Response, ContractError> {
     let mut config: Config = read_config(deps.storage)?;
 

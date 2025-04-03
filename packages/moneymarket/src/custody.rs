@@ -36,6 +36,7 @@ pub enum ExecuteMsg {
         owner: Option<String>,
         liquidation_contract: Option<String>,
         collector_contract: Option<String>,
+        max_deposit: Option<Uint256>,
     },
     /// Make specified amount of tokens unspendable
     LockCollateral { borrower: String, amount: Uint256 },

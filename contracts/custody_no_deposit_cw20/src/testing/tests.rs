@@ -60,6 +60,7 @@ fn update_config() {
         owner: Some("owner2".to_string()),
         liquidation_contract: Some("liquidation2".to_string()),
         collector_contract: Some("collector2".to_string()),
+        max_deposit: None,
     };
     let info = mock_info("owner", &[]);
     execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap();
