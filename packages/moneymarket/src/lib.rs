@@ -11,3 +11,4 @@ pub mod overseer;
 pub mod querier;
 pub mod terraswap;
 pub mod tokens;
+pub mod custody_deposit_cap;

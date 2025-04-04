@@ -12,12 +12,13 @@ use crate::collateral::{
 };
 use crate::error::ContractError;
 use crate::state::{
-    read_config, store_config, store_contract_balance_info, Config, ContractBalanceInfo,
+    read_config, read_contract_balance_info, store_config, store_contract_balance_info, Config,
+    ContractBalanceInfo,
 };
 
 use cw20::Cw20ReceiveMsg;
 use moneymarket::common::optional_addr_validate;
-use moneymarket::custody::{
+use moneymarket::custody_deposit_cap::{
     ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
 };
 
@@ -35,6 +36,7 @@ pub fn instantiate(
         market_contract: deps.api.addr_validate(&msg.market_contract)?,
         liquidation_contract: deps.api.addr_validate(&msg.liquidation_contract)?,
         collector_contract: deps.api.addr_validate(&msg.collector_contract)?,
+        max_deposit: msg.max_deposit,
     };
 
     let contract_balance_info = ContractBalanceInfo {
@@ -60,6 +62,7 @@ pub fn execute(
             owner,
             liquidation_contract,
             collector_contract,
+            max_deposit,
         } => {
             let api = deps.api;
             update_config(
@@ -68,6 +71,7 @@ pub fn execute(
                 optional_addr_validate(api, owner)?,
                 optional_addr_validate(api, liquidation_contract)?,
                 optional_addr_validate(api, collector_contract)?,
+                max_deposit,
             )
         }
         ExecuteMsg::LockCollateral { borrower, amount } => {
@@ -97,6 +101,7 @@ pub fn receive_cw20(
     cw20_msg: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
     let contract_addr = info.sender;
+    let contract_balance = read_contract_balance_info(deps.storage)?;
 
     match from_binary(&cw20_msg.msg) {
         Ok(Cw20HookMsg::DepositCollateral {}) => {
@@ -104,6 +109,13 @@ pub fn receive_cw20(
             let config: Config = read_config(deps.storage)?;
             if contract_addr != config.collateral_token {
                 return Err(ContractError::Unauthorized {});
+            }
+
+            // check if the contract balance is less than max deposit
+            let new_balance = contract_balance.balance + cw20_msg.amount.into();
+
+            if new_balance > config.max_deposit {
+                return Err(ContractError::InvalidMaxDeposit(new_balance.into()));
             }
 
             let cw20_sender_addr = deps.api.addr_validate(&cw20_msg.sender)?;
@@ -119,8 +131,10 @@ pub fn update_config(
     owner: Option<Addr>,
     liquidation_contract: Option<Addr>,
     collector_contract: Option<Addr>,
+    max_deposit: Option<Uint256>,
 ) -> Result<Response, ContractError> {
     let mut config: Config = read_config(deps.storage)?;
+    let contract_balance = read_contract_balance_info(deps.storage)?;
 
     if info.sender != config.owner {
         return Err(ContractError::Unauthorized {});
@@ -136,6 +150,15 @@ pub fn update_config(
 
     if let Some(collector_contract) = collector_contract {
         config.collector_contract = deps.api.addr_validate(collector_contract.as_str())?;
+    }
+
+    if let Some(max_deposit) = max_deposit {
+        if contract_balance.balance > max_deposit {
+            return Err(ContractError::InvalidMaxDeposit(
+                contract_balance.balance.into(),
+            ));
+        }
+        config.max_deposit = max_deposit;
     }
 
     store_config(deps.storage, &config)?;
@@ -167,6 +190,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         market_contract: config.market_contract.to_string(),
         liquidation_contract: config.liquidation_contract.to_string(),
         collector_contract: config.collector_contract.to_string(),
+        max_deposit: config.max_deposit,
     })
 }
 

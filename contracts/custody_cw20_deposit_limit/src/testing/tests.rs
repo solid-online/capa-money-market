@@ -8,7 +8,7 @@ use crate::testing::mock_querier::mock_dependencies;
 
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
-use moneymarket::custody::{
+use moneymarket::custody_deposit_cap::{
     BorrowerResponse, ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg,
 };
 use moneymarket::liquidation::Cw20HookMsg as LiquidationCw20HookMsg;
@@ -24,7 +24,8 @@ fn proper_initialization() {
         market_contract: "market".to_string(),
         liquidation_contract: "liquidation".to_string(),
         collector_contract: "collector".to_string(),
-        
+        max_deposit: Uint256::from(100u128),
+    
     };
 
     let info = mock_info("addr0000", &[]);
@@ -52,6 +53,7 @@ fn update_config() {
         market_contract: "market".to_string(),
         liquidation_contract: "liquidation".to_string(),
         collector_contract: "collector".to_string(),
+        max_deposit: Uint256::from(100u128),
     };
 
     let info = mock_info("addr0000", &[]);
@@ -63,6 +65,7 @@ fn update_config() {
         owner: Some("owner2".to_string()),
         liquidation_contract: Some("liquidation2".to_string()),
         collector_contract: Some("collector2".to_string()),
+        max_deposit: Some(Uint256::from(100u128)),
     };
     let info = mock_info("owner", &[]);
     execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap();
@@ -95,6 +98,7 @@ fn deposit_collateral() {
         market_contract: "market".to_string(),
         liquidation_contract: "liquidation".to_string(),
         collector_contract: "collector".to_string(),
+        max_deposit: Uint256::from(100u128),
     };
 
     let info = mock_info("addr0000", &[]);
@@ -158,15 +162,12 @@ fn deposit_collateral() {
 
     // Deposit more
     let info = mock_info("lunax", &[]);
-    let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-    assert_eq!(
-        res.attributes,
-        vec![
-            attr("action", "deposit_collateral"),
-            attr("borrower", "addr0000"),
-            attr("amount", "100"),
-        ]
-    );
+    let res = execute(deps.as_mut(), mock_env(), info, msg);
+
+    match res {
+        Err(ContractError::InvalidMaxDeposit(200)) => (),
+        _ => panic!("DO NOT ENTER HERE"),
+    }
 
     let query_res = query(
         deps.as_ref(),
@@ -181,8 +182,8 @@ fn deposit_collateral() {
         borrower_res,
         BorrowerResponse {
             borrower: "addr0000".to_string(),
-            balance: Uint256::from(200u128),
-            spendable: Uint256::from(200u128),
+            balance: Uint256::from(100u128),
+            spendable: Uint256::from(100u128),
         }
     );
 }
@@ -198,6 +199,7 @@ fn withdraw_collateral() {
         market_contract: "market".to_string(),
         liquidation_contract: "liquidation".to_string(),
         collector_contract: "collector".to_string(),
+        max_deposit: Uint256::from(100u128),
     };
 
     let info = mock_info("addr0000", &[]);
@@ -329,6 +331,7 @@ fn lock_collateral() {
         market_contract: "market".to_string(),
         liquidation_contract: "liquidation".to_string(),
         collector_contract: "collector".to_string(),
+        max_deposit: Uint256::from(100u128),
     };
 
     let info = mock_info("addr0000", &[]);
@@ -514,6 +517,7 @@ fn liquidate_collateral() {
         market_contract: "market".to_string(),
         liquidation_contract: "liquidation".to_string(),
         collector_contract: "collector".to_string(),
+        max_deposit: Uint256::from(100u128),
     };
 
     let info = mock_info("addr0000", &[]);

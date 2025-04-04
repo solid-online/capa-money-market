@@ -18,6 +18,7 @@ pub struct Config {
     pub market_contract: Addr,
     pub liquidation_contract: Addr,
     pub collector_contract: Addr,
+    pub max_deposit: Uint256,
 }
 // Total luna held by contract
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
