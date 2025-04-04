@@ -19,7 +19,7 @@ pub struct InstantiateMsg {
     pub liquidation_contract: String,
     // Collector contract address
     pub collector_contract: String,
-    // Max deposit 
+    // Max deposit
     pub max_deposit: Uint256,
 }
 

@@ -37,5 +37,5 @@ pub enum ContractError {
     MaxSlipageTooHigh {},
 
     #[error("Deposits for this asset are not allowed anymore")]
-    DepositNotAllowed{},
+    DepositNotAllowed {},
 }

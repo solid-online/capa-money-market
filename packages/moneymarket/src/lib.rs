@@ -1,5 +1,6 @@
 pub mod common;
 pub mod custody;
+pub mod custody_deposit_cap;
 pub mod distribution_model;
 pub mod interest_model;
 pub mod liquidation;
@@ -11,4 +12,3 @@ pub mod overseer;
 pub mod querier;
 pub mod terraswap;
 pub mod tokens;
-pub mod custody_deposit_cap;

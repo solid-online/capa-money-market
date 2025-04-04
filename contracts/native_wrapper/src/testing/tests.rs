@@ -326,7 +326,7 @@ fn unbound() {
         &State {
             total_bond: Uint128::zero(),
             total_supply: Uint128::zero(),
-            exchange_rate: Uint128::one()
+            exchange_rate: Uint128::one(),
         },
     )
     .unwrap();

@@ -25,7 +25,6 @@ fn proper_initialization() {
         liquidation_contract: "liquidation".to_string(),
         collector_contract: "collector".to_string(),
         max_deposit: Uint256::from(100u128),
-    
     };
 
     let info = mock_info("addr0000", &[]);

@@ -202,7 +202,7 @@ fn update_config() {
         base_borrow_fee: Some(Decimal256::from_str("0.006").unwrap()),
         fee_increase_factor: Some(Decimal256::from_str("2").unwrap()),
         flash_mint_fee: None,
-        oracle_addr: None
+        oracle_addr: None,
     };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -221,7 +221,7 @@ fn update_config() {
         base_borrow_fee: None,
         fee_increase_factor: None,
         flash_mint_fee: None,
-        oracle_addr: Some("neworacle".to_string())
+        oracle_addr: Some("neworacle".to_string()),
     };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -242,7 +242,7 @@ fn update_config() {
         base_borrow_fee: None,
         fee_increase_factor: None,
         flash_mint_fee: None,
-        oracle_addr: None
+        oracle_addr: None,
     };
 
     let res = execute(deps.as_mut(), mock_env(), info, msg);
@@ -1183,7 +1183,7 @@ fn flash_mint() {
         base_borrow_fee: None,
         fee_increase_factor: None,
         flash_mint_fee: Some(flash_mint_fee),
-        oracle_addr: None
+        oracle_addr: None,
     };
     let _res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 

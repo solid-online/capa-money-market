@@ -194,7 +194,7 @@ pub fn query_state(deps: Deps) -> StdResult<StateResponse> {
     Ok(StateResponse {
         total_bond: state.total_bond,
         total_supply: state.total_supply,
-        exchange_rate: state.exchange_rate
+        exchange_rate: state.exchange_rate,
     })
 }
 

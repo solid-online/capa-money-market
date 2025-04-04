@@ -37,6 +37,5 @@ pub enum ContractError {
     MaxSlipageTooHigh {},
 
     #[error("Cannot change max_deposit , contract balance is {0}")]
-    InvalidMaxDeposit (u128),
+    InvalidMaxDeposit(u128),
 }
-
