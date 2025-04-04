@@ -360,6 +360,7 @@ fn lock_collateral() {
             (bluna_collat_token.clone(), Uint256::from(1000000u64)),
             (batom_collat_token.clone(), Uint256::from(10000000u64)),
         ],
+        to: Some("addr0001".to_string())
     };
     let info = mock_info("addr0000", &[]);
     let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -370,7 +371,7 @@ fn lock_collateral() {
                 contract_addr: "custody_bluna".to_string(),
                 funds: vec![],
                 msg: to_binary(&CustodyExecuteMsg::LockCollateral {
-                    borrower: "addr0000".to_string(),
+                    borrower: "addr0001".to_string(),
                     amount: Uint256::from(1000000u64),
                 })
                 .unwrap(),
@@ -379,7 +380,7 @@ fn lock_collateral() {
                 contract_addr: "custody_batom".to_string(),
                 funds: vec![],
                 msg: to_binary(&CustodyExecuteMsg::LockCollateral {
-                    borrower: "addr0000".to_string(),
+                    borrower: "addr0001".to_string(),
                     amount: Uint256::from(10000000u64),
                 })
                 .unwrap(),
@@ -391,7 +392,7 @@ fn lock_collateral() {
         res.attributes,
         vec![
             attr("action", "lock_collateral"),
-            attr("borrower", "addr0000"),
+            attr("borrower", "addr0001"),
             attr(
                 "collaterals",
                 format!(
@@ -406,7 +407,7 @@ fn lock_collateral() {
         deps.as_ref(),
         mock_env(),
         QueryMsg::Collaterals {
-            borrower: "addr0000".to_string(),
+            borrower: "addr0001".to_string(),
         },
     )
     .unwrap();
@@ -414,7 +415,7 @@ fn lock_collateral() {
     assert_eq!(
         collaterals_res,
         CollateralsResponse {
-            borrower: "addr0000".to_string(),
+            borrower: "addr0001".to_string(),
             collaterals: vec![
                 (batom_collat_token.clone(), Uint256::from(10000000u64)),
                 (bluna_collat_token.clone(), Uint256::from(1000000u64)),
@@ -436,7 +437,7 @@ fn lock_collateral() {
         all_collaterals_res,
         AllCollateralsResponse {
             all_collaterals: vec![CollateralsResponse {
-                borrower: "addr0000".to_string(),
+                borrower: "addr0001".to_string(),
                 collaterals: vec![
                     (batom_collat_token, Uint256::from(10000000u64)),
                     (bluna_collat_token, Uint256::from(1000000u64)),
@@ -494,7 +495,7 @@ fn unlock_collateral() {
     let info = mock_info("addr0000", &[]);
 
     // simulate lock collateral
-    _lock_collateral(deps.as_mut(), info.clone(), collaterals).unwrap();
+    _lock_collateral(deps.as_mut(), info.clone(), None, collaterals).unwrap();
 
     // Failed to unlock more than locked amount
     let msg = ExecuteMsg::UnlockCollateral {
@@ -704,7 +705,7 @@ fn liquidate_collateral() {
     let info = mock_info("addr0000", &[]);
 
     // simulate lock collateral
-    _lock_collateral(deps.as_mut(), info, collaterals).unwrap();
+    _lock_collateral(deps.as_mut(), info, None, collaterals).unwrap();
 
     deps.querier.with_oracle_price(&[
         (
