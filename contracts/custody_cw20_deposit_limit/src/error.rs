@@ -35,10 +35,4 @@ pub enum ContractError {
 
     #[error("Max slipage higher then 50%")]
     MaxSlipageTooHigh {},
-
-    #[error("Invalid max deposit amount: current contract balance is {0}")]
-    InvalidMaxDeposit (u128),
-
-    #[error("Can't deposit {0} tokens, max deposit limit is {1}")]
-    InvalidDepositLimit(u128, u128),
 }

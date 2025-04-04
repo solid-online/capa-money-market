@@ -18,36 +18,6 @@ pub struct Config {
     pub market_contract: Addr,
     pub liquidation_contract: Addr,
     pub collector_contract: Addr,
-    pub max_deposit: Uint256,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct CustodyInstantiateMsg {
-    /// owner address
-    pub owner: String,
-    /// bAsset token address
-    pub collateral_token: String,
-    /// overseer contract address
-    pub overseer_contract: String,
-    /// market contract address
-    pub market_contract: String,
-    /// liquid staking staking contract
-    pub liquidation_contract: String,
-    // Collector contract address
-    pub collector_contract: String,
-    // Set maximum deposit limit
-    pub max_deposit: Uint256,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct CustomConfigResponse {
-    pub owner: String,
-    pub collateral_token: String,
-    pub overseer_contract: String,
-    pub market_contract: String,
-    pub liquidation_contract: String,
-    pub collector_contract: String,
-    pub max_deposit: Uint256,
 }
 // Total luna held by contract
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
