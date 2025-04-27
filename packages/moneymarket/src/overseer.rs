@@ -62,6 +62,7 @@ pub enum ExecuteMsg {
     ////////////////////
     LockCollateral {
         collaterals: TokensHuman, // <(Collateral Token, Amount)>
+        to: Option<String>
     },
     UnlockCollateral {
         collaterals: TokensHuman, // <(Collateral Token, Amount)>

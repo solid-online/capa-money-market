@@ -62,7 +62,7 @@ pub enum ExecuteMsg {
 #[serde(rename_all = "snake_case")]
 pub enum Cw20HookMsg {
     /// Deposit collateral token
-    DepositCollateral {},
+    DepositCollateral {to: Option<String>},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

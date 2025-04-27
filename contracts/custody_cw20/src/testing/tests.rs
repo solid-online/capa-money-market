@@ -102,7 +102,7 @@ fn deposit_collateral() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::DepositCollateral {}).unwrap(),
+        msg: to_binary(&Cw20HookMsg::DepositCollateral {to: None}).unwrap(),
     });
 
     // failed; cannot directly execute receive message
@@ -205,7 +205,7 @@ fn withdraw_collateral() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::DepositCollateral {}).unwrap(),
+        msg: to_binary(&Cw20HookMsg::DepositCollateral {to: None}).unwrap(),
     });
 
     let info = mock_info("lunax", &[]);
@@ -336,7 +336,7 @@ fn lock_collateral() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::DepositCollateral {}).unwrap(),
+        msg: to_binary(&Cw20HookMsg::DepositCollateral {to: None}).unwrap(),
     });
 
     let info = mock_info("lunax", &[]);
@@ -521,7 +521,7 @@ fn liquidate_collateral() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::DepositCollateral {}).unwrap(),
+        msg: to_binary(&Cw20HookMsg::DepositCollateral {to: Some("addr0001".to_string())}).unwrap(),
     });
 
     let info = mock_info("lunax", &[]);
@@ -530,13 +530,13 @@ fn liquidate_collateral() {
         res.attributes,
         vec![
             attr("action", "deposit_collateral"),
-            attr("borrower", "addr0000"),
+            attr("borrower", "addr0001"),
             attr("amount", "100"),
         ]
     );
 
     let msg = ExecuteMsg::LockCollateral {
-        borrower: "addr0000".to_string(),
+        borrower: "addr0001".to_string(),
         amount: Uint256::from(50u64),
     };
     let info = mock_info("overseer", &[]);
@@ -545,17 +545,17 @@ fn liquidate_collateral() {
         res.attributes,
         vec![
             attr("action", "lock_collateral"),
-            attr("borrower", "addr0000"),
+            attr("borrower", "addr0001"),
             attr("amount", "50"),
         ]
     );
 
     let msg = ExecuteMsg::LiquidateCollateral {
-        liquidator: "addr0001".to_string(),
-        borrower: "addr0000".to_string(),
+        liquidator: "addr0000".to_string(),
+        borrower: "addr0001".to_string(),
         amount: Uint256::from(100u64),
     };
-    let info = mock_info("addr0000", &[]);
+    let info = mock_info("addr0001", &[]);
     let res = execute(deps.as_mut(), mock_env(), info, msg.clone());
     match res {
         Err(ContractError::Unauthorized {}) => (),
@@ -570,7 +570,7 @@ fn liquidate_collateral() {
     }
     let msg = ExecuteMsg::LiquidateCollateral {
         liquidator: "liquidator".to_string(),
-        borrower: "addr0000".to_string(),
+        borrower: "addr0001".to_string(),
         amount: Uint256::from(10u64),
     };
     let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -579,7 +579,7 @@ fn liquidate_collateral() {
         vec![
             attr("action", "liquidate_collateral"),
             attr("liquidator", "liquidator"),
-            attr("borrower", "addr0000"),
+            attr("borrower", "addr0001"),
             attr("amount", "10"),
         ]
     );
@@ -596,7 +596,7 @@ fn liquidate_collateral() {
                     liquidator: "liquidator".to_string(),
                     fee_address: Some("collector".to_string()),
                     repay_address: Some("market".to_string()),
-                    borrower_address: Some("addr0000".to_string()),
+                    borrower_address: Some("addr0001".to_string()),
                 })
                 .unwrap()
             })
