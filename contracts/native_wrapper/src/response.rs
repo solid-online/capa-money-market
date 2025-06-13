@@ -8,7 +8,6 @@
 #![allow(unused_attributes)]
 #![cfg_attr(rustfmt, rustfmt::skip)]
 
-#![allow(box_pointers)]
 #![allow(dead_code)]
 #![allow(missing_docs)]
 #![allow(non_camel_case_types)]
@@ -215,12 +214,6 @@ impl ::protobuf::Clear for MsgInstantiateContractResponse {
 impl ::std::fmt::Debug for MsgInstantiateContractResponse {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         ::protobuf::text_format::fmt(self, f)
-    }
-}
-
-impl ::protobuf::reflect::ProtobufValue for MsgInstantiateContractResponse {
-    fn as_ref(&self) -> ::protobuf::reflect::ReflectValueRef {
-        ::protobuf::reflect::ReflectValueRef::Message(self)
     }
 }
 

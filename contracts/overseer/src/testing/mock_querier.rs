@@ -1,21 +1,18 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, from_slice, to_binary, Coin, ContractResult, OwnedDeps, Querier, QuerierResult,
+    from_json, to_json_binary, Coin, ContractResult, Decimal256, OwnedDeps, Querier, QuerierResult, Uint256,
     QueryRequest, SystemError, SystemResult, WasmQuery,
 };
 use std::collections::HashMap;
 use std::marker::PhantomData;
-
+use cosmwasm_std::Empty;
 use moneymarket::liquidation::LiquidationAmountResponse;
 use moneymarket::market::{BorrowerInfoResponse, StateResponse};
 use moneymarket::oracle::PriceResponse;
 use moneymarket::tokens::TokensHuman;
-
-use terra_cosmwasm::TerraQueryWrapper;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -55,7 +52,7 @@ pub fn mock_dependencies(
 }
 
 pub struct WasmMockQuerier {
-    base: MockQuerier<TerraQueryWrapper>,
+    base: MockQuerier,
     epoch_state_querier: EpochStateQuerier,
     oracle_price_querier: OraclePriceQuerier,
     loan_amount_querier: LoanAmountQuerier,
@@ -122,7 +119,7 @@ pub(crate) fn borrower_amount_to_map(
 impl Querier for WasmMockQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         // MockQuerier doesn't support Custom, so we ignore it completely here
-        let request: QueryRequest<TerraQueryWrapper> = match from_slice(bin_request) {
+        let request: QueryRequest<Empty> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
@@ -160,14 +157,14 @@ pub(crate) fn liquidation_percent_to_map(
 }
 
 impl WasmMockQuerier {
-    pub fn handle_query(&self, request: &QueryRequest<TerraQueryWrapper>) -> QuerierResult {
+    pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match &request {
             QueryRequest::Wasm(WasmQuery::Smart { contract_addr, msg }) => {
-                match from_binary(msg).unwrap() {
+                match from_json(msg).unwrap() {
                     QueryMsg::State { block_height: _ } => {
                         match self.epoch_state_querier.epoch_state.get(contract_addr) {
                             Some(_v) => {
-                                SystemResult::Ok(ContractResult::from(to_binary(&StateResponse {
+                                SystemResult::Ok(ContractResult::from(to_json_binary(&StateResponse {
                                     total_liabilities: Decimal256::zero(),
                                 })))
                             }
@@ -182,7 +179,7 @@ impl WasmMockQuerier {
                         borrower,
                         block_height: _,
                     } => match self.loan_amount_querier.borrower_amount.get(&borrower) {
-                        Some(v) => SystemResult::Ok(ContractResult::from(to_binary(
+                        Some(v) => SystemResult::Ok(ContractResult::from(to_json_binary(
                             &BorrowerInfoResponse {
                                 borrower,
                                 loan_amount: *v,
@@ -196,7 +193,7 @@ impl WasmMockQuerier {
                     QueryMsg::Price { base, quote } => {
                         match self.oracle_price_querier.oracle_price.get(&(base, quote)) {
                             Some(v) => {
-                                SystemResult::Ok(ContractResult::from(to_binary(&PriceResponse {
+                                SystemResult::Ok(ContractResult::from(to_json_binary(&PriceResponse {
                                     rate: v.0,
                                     last_updated_base: v.1,
                                     last_updated_quote: v.2,
@@ -221,7 +218,7 @@ impl WasmMockQuerier {
                         {
                             Some(v) => {
                                 if borrow_amount > borrow_limit {
-                                    SystemResult::Ok(ContractResult::from(to_binary(
+                                    SystemResult::Ok(ContractResult::from(to_json_binary(
                                         &LiquidationAmountResponse {
                                             collaterals: collaterals
                                                 .iter()
@@ -231,7 +228,7 @@ impl WasmMockQuerier {
                                         },
                                     )))
                                 } else {
-                                    SystemResult::Ok(ContractResult::from(to_binary(
+                                    SystemResult::Ok(ContractResult::from(to_json_binary(
                                         &LiquidationAmountResponse {
                                             collaterals: vec![],
                                         },
@@ -252,7 +249,7 @@ impl WasmMockQuerier {
 }
 
 impl WasmMockQuerier {
-    pub fn new(base: MockQuerier<TerraQueryWrapper>) -> Self {
+    pub fn new(base: MockQuerier) -> Self {
         WasmMockQuerier {
             base,
             epoch_state_querier: EpochStateQuerier::default(),

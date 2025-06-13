@@ -1,4 +1,3 @@
-#[cfg(not(feature = "library"))]
 pub mod contract;
 mod error;
 mod execute;

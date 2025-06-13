@@ -46,7 +46,7 @@ pub struct AdminListResponse {
     pub mutable: bool,
 }
 
-#[cfg(any(test, feature = "test-utils"))]
+#[cfg(test)]
 impl AdminListResponse {
     /// Utility function for converting a message to its canonical form, so two messages with
     /// different representations but same semantical meaning can be easly compared.

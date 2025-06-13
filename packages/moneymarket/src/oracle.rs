@@ -1,8 +1,5 @@
 use cosmwasm_schema::cw_serde;
-
-use cosmwasm_bignumber::math::Decimal256;
-
-use cosmwasm_std::{Addr, Empty, QueryRequest};
+use cosmwasm_std::{Addr, Decimal256, Empty, QueryRequest};
 
 /// Base precision of assets.
 ///

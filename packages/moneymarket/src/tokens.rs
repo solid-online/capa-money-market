@@ -1,5 +1,4 @@
-use cosmwasm_bignumber::math::Uint256;
-use cosmwasm_std::{Addr, Deps, StdError, StdResult};
+use cosmwasm_std::{Addr, Deps, StdError, StdResult, Uint256};
 
 pub type Token = (Addr, Uint256);
 pub type TokenHuman = (String, Uint256);

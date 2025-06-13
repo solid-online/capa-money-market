@@ -1,8 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
-use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage};
+use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage, Decimal256, Uint256};
 use cosmwasm_storage::{bucket, bucket_read, ReadonlyBucket, ReadonlySingleton, Singleton};
 
 use moneymarket::market::BorrowerInfoResponse;

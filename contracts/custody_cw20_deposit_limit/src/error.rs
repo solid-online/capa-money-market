@@ -1,4 +1,4 @@
-use cosmwasm_std::{OverflowError, StdError};
+use cosmwasm_std::{OverflowError, StdError, Uint256 };
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -16,10 +16,10 @@ pub enum ContractError {
     NoBalance {},
 
     #[error("Liquidation amount cannot exceed locked amount: {0}")]
-    LiquidationAmountExceedsLocked(u128),
+    LiquidationAmountExceedsLocked(Uint256),
 
     #[error("Lock amount cannot excceed the user's spendable amount: {0}")]
-    LockAmountExceedsSpendable(u128),
+    LockAmountExceedsSpendable(Uint256),
 
     #[error("Invalid reply ID")]
     InvalidReplyId {},
@@ -28,14 +28,14 @@ pub enum ContractError {
     MissingDepositCollateralHook {},
 
     #[error("Unlock amount cannot exceed locked amount: {0}")]
-    UnlockAmountExceedsLocked(u128),
+    UnlockAmountExceedsLocked(Uint256),
 
     #[error("Withdraw amount cannot exceed the user's spendable amount: {0}")]
-    WithdrawAmountExceedsSpendable(u128),
+    WithdrawAmountExceedsSpendable(Uint256),
 
     #[error("Max slipage higher then 50%")]
     MaxSlipageTooHigh {},
 
     #[error("Cannot change max_deposit , contract balance is {0}")]
-    InvalidMaxDeposit(u128),
+    InvalidMaxDeposit(Uint256),
 }

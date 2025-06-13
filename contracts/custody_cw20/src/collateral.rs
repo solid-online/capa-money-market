@@ -1,13 +1,14 @@
+use std::convert::TryInto;
+
 use crate::error::ContractError;
 use crate::state::{
     read_borrower_info, read_borrowers, read_config, read_contract_balance_info,
     remove_borrower_info, store_borrower_info, store_contract_balance_info, BorrowerInfo, Config,
     ContractBalanceInfo,
 };
-
-use cosmwasm_bignumber::math::Uint256;
 use cosmwasm_std::{
-    attr, to_binary, Addr, CosmosMsg, Deps, DepsMut, MessageInfo, Response, StdResult, WasmMsg,
+    attr, to_json_binary, Addr, CosmosMsg, Deps, DepsMut, MessageInfo, Response, StdResult,
+    Uint256, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
 use moneymarket::custody::{BorrowerResponse, BorrowersResponse};
@@ -61,7 +62,7 @@ pub fn withdraw_collateral(
     // if spenable is less then amount return error
     if borrower_info.spendable < amount {
         return Err(ContractError::WithdrawAmountExceedsSpendable(
-            borrower_info.spendable.into(),
+            borrower_info.spendable.try_into().unwrap(),
         ));
     }
 
@@ -83,9 +84,9 @@ pub fn withdraw_collateral(
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.collateral_token.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: borrower.to_string(),
-                amount: amount.into(),
+                amount: amount.try_into().unwrap(),
             })?,
         }))
         .add_attributes(vec![
@@ -115,7 +116,7 @@ pub fn lock_collateral(
     // check if the borrower has something spendable to lock, else return an error
     if amount > borrower_info.spendable {
         return Err(ContractError::LockAmountExceedsSpendable(
-            borrower_info.spendable.into(),
+            borrower_info.spendable,
         ));
     }
     // update spendable amount and store it
@@ -150,7 +151,7 @@ pub fn unlock_collateral(
     // if the amount is greater then the one locked return error else update the borrower_info
     if amount > borrowed_amt {
         return Err(ContractError::UnlockAmountExceedsLocked(
-            borrowed_amt.into(),
+            borrowed_amt,
         ));
     }
 
@@ -187,7 +188,7 @@ pub fn liquidate_collateral(
     // Check that amount is less then amount locked
     if amount > borrowed_amt {
         return Err(ContractError::LiquidationAmountExceedsLocked(
-            borrowed_amt.into(),
+            borrowed_amt,
         ));
     }
     // update borrower balance
@@ -200,10 +201,10 @@ pub fn liquidate_collateral(
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.collateral_token.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Send {
+            msg: to_json_binary(&Cw20ExecuteMsg::Send {
                 contract: config.liquidation_contract.to_string(),
-                amount: amount.into(),
-                msg: to_binary(&LiquidationCw20HookMsg::ExecuteBid {
+                amount: amount.try_into().unwrap(),
+                msg: to_json_binary(&LiquidationCw20HookMsg::ExecuteBid {
                     liquidator: liquidator.to_string(),
                     fee_address: Some(config.collector_contract.to_string()),
                     repay_address: Some(config.market_contract.to_string()),

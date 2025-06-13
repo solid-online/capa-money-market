@@ -1,11 +1,10 @@
-use cosmwasm_bignumber::math::Decimal256;
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Addr, Decimal256};
 use cw_storage_plus::{Item, Map};
 use moneymarket::oracle::Source;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::Addr;
 
 pub const CONFIG: Item<Config> = Item::new("config");
 pub const ASSETS: Map<String, Source> = Map::new("assets");

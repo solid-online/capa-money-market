@@ -1,4 +1,4 @@
-use cosmwasm_std::{OverflowError, StdError};
+use cosmwasm_std::{OverflowError, StdError, Uint256};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -13,7 +13,7 @@ pub enum ContractError {
     Unauthorized {},
 
     #[error("Borrow amount too high; Loan liability becomes greater than borrow limit: {0}")]
-    BorrowExceedsLimit(u128),
+    BorrowExceedsLimit(Uint256),
 
     #[error("Must deposit initial funds {0}{0}")]
     InitialFundsNotDeposited(u128, String),

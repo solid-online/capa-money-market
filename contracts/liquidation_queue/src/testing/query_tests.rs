@@ -1,8 +1,7 @@
 use crate::contract::{execute, instantiate, query};
 use crate::testing::mock_querier::mock_dependencies;
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{from_binary, to_binary, Uint128};
+use cosmwasm_std::{from_json, to_json_binary, Decimal256, Uint128, Uint256};
 use cw20::Cw20ReceiveMsg;
 use moneymarket::liquidation_queue::{
     BidPoolResponse, BidPoolsResponse, BidResponse, BidsResponse, CollateralInfoResponse,
@@ -61,7 +60,7 @@ fn query_liquidation_amount() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(100000000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "token0000".to_string(),
             premium_slot: 5u8,
         })
@@ -72,7 +71,7 @@ fn query_liquidation_amount() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(100000000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "token0001".to_string(),
             premium_slot: 5u8,
         })
@@ -82,7 +81,7 @@ fn query_liquidation_amount() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(100000000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "token0002".to_string(),
             premium_slot: 5u8,
         })
@@ -100,7 +99,7 @@ fn query_liquidation_amount() {
     };
 
     let res = query(deps.as_ref(), mock_env(), msg).unwrap();
-    let res: LiquidationAmountResponse = from_binary(&res).unwrap();
+    let res: LiquidationAmountResponse = from_json(&res).unwrap();
     assert_eq!(
         res,
         LiquidationAmountResponse {
@@ -116,7 +115,7 @@ fn query_liquidation_amount() {
     };
 
     let res = query(deps.as_ref(), mock_env(), msg).unwrap();
-    let res: LiquidationAmountResponse = from_binary(&res).unwrap();
+    let res: LiquidationAmountResponse = from_json(&res).unwrap();
     assert_eq!(
         res,
         LiquidationAmountResponse {
@@ -142,7 +141,7 @@ fn query_liquidation_amount() {
     // fee_deductor = 0.931095
     // liquidation_ratio = 0.3580014213
     let res = query(deps.as_ref(), mock_env(), query_msg).unwrap();
-    let res: LiquidationAmountResponse = from_binary(&res).unwrap();
+    let res: LiquidationAmountResponse = from_json(&res).unwrap();
     assert_eq!(
         res,
         LiquidationAmountResponse {
@@ -190,7 +189,7 @@ fn query_bids() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "token0000".to_string(),
             premium_slot: 5u8,
         })
@@ -201,7 +200,7 @@ fn query_bids() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "token0000".to_string(),
             premium_slot: 5u8,
         })
@@ -211,7 +210,7 @@ fn query_bids() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "token0000".to_string(),
             premium_slot: 10u8,
         })
@@ -219,7 +218,7 @@ fn query_bids() {
     });
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-    let bid_response: BidResponse = from_binary(
+    let bid_response: BidResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -247,7 +246,7 @@ fn query_bids() {
         }
     );
 
-    let bids_response: BidsResponse = from_binary(
+    let bids_response: BidsResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -308,7 +307,7 @@ fn query_bids() {
         }
     );
 
-    let bids_response: BidsResponse = from_binary(
+    let bids_response: BidsResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -377,7 +376,7 @@ fn query_bid_pools() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "token0000".to_string(),
             premium_slot: 5u8,
         })
@@ -388,7 +387,7 @@ fn query_bid_pools() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "token0000".to_string(),
             premium_slot: 6u8,
         })
@@ -398,7 +397,7 @@ fn query_bid_pools() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "token0000".to_string(),
             premium_slot: 10u8,
         })
@@ -406,7 +405,7 @@ fn query_bid_pools() {
     });
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-    let bid_pool_response: BidPoolResponse = from_binary(
+    let bid_pool_response: BidPoolResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -430,7 +429,7 @@ fn query_bid_pools() {
         }
     );
 
-    let bid_pools_response: BidPoolsResponse = from_binary(
+    let bid_pools_response: BidPoolsResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -475,7 +474,7 @@ fn query_bid_pools() {
         }
     );
 
-    let bid_pools_response: BidPoolsResponse = from_binary(
+    let bid_pools_response: BidPoolsResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -534,7 +533,7 @@ fn query_collateral_info() {
     let info = mock_info("owner0000", &[]);
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-    let collateral_info_response: CollateralInfoResponse = from_binary(
+    let collateral_info_response: CollateralInfoResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),

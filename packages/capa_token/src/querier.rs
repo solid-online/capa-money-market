@@ -1,7 +1,6 @@
-use cosmwasm_bignumber::math::Uint256;
 use cosmwasm_std::{
-    to_binary, Addr, AllBalanceResponse, BalanceResponse, BankQuery, Coin, Deps, QueryRequest,
-    StdResult, WasmQuery,
+    to_json_binary, Addr, AllBalanceResponse, BalanceResponse, BankQuery, Coin, Deps, QueryRequest,
+    StdResult, Uint256, WasmQuery,
 };
 use cw20::{BalanceResponse as Cw20BalanceResponse, Cw20QueryMsg, TokenInfoResponse};
 
@@ -32,7 +31,7 @@ pub fn query_token_balance(
     // load balance form the token contract
     let res: Cw20BalanceResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: contract_addr.to_string(),
-        msg: to_binary(&Cw20QueryMsg::Balance {
+        msg: to_json_binary(&Cw20QueryMsg::Balance {
             address: account_addr.to_string(),
         })?,
     }))?;
@@ -45,7 +44,7 @@ pub fn query_supply(deps: Deps, contract_addr: Addr) -> StdResult<Uint256> {
     let token_info: TokenInfoResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: contract_addr.to_string(),
-            msg: to_binary(&Cw20QueryMsg::TokenInfo {})?,
+            msg: to_json_binary(&Cw20QueryMsg::TokenInfo {})?,
         }))?;
 
     Ok(Uint256::from(token_info.total_supply.u128()))

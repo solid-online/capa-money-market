@@ -1,20 +1,19 @@
+use std::convert::TryInto;
 use std::{collections::HashMap, marker::PhantomData};
 
 use astroport::asset::{Asset, AssetInfo, PairInfo};
 use astroport::factory::PairType;
 use astroport::pair::PoolResponse;
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
-use cosmwasm_std::Uint128;
+use cosmwasm_std::Empty;
 use cosmwasm_std::{
-    from_binary, from_slice,
+    from_json,
     testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR},
-    to_binary, Addr, Coin, ContractResult, OwnedDeps, Querier, QuerierResult, QueryRequest,
+    to_json_binary, Addr, Coin, ContractResult, OwnedDeps, Querier, QuerierResult, QueryRequest,
     SystemError, SystemResult, WasmQuery,
 };
+use cosmwasm_std::{Decimal256, Uint128, Uint256};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use terra_cosmwasm::TerraQueryWrapper;
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AvaiableQueries {
@@ -56,7 +55,7 @@ pub fn oracle_mock_dependencies(
 }
 
 pub struct WasmMockQuerier {
-    base: MockQuerier<TerraQueryWrapper>,
+    base: MockQuerier,
     eris_querier: ErisQuerier,
     token_supply: HashMap<Addr, Uint256>,
     generator_lp_stake: HashMap<(Addr, Addr), Uint256>,
@@ -80,7 +79,7 @@ pub struct PoolStruct {
 impl Querier for WasmMockQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         // MockQuerier doesn't support Custom, so we ignore it completely here
-        let request: QueryRequest<TerraQueryWrapper> = match from_slice(bin_request) {
+        let request: QueryRequest<Empty> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
@@ -94,7 +93,7 @@ impl Querier for WasmMockQuerier {
 }
 
 impl WasmMockQuerier {
-    pub fn new(base: MockQuerier<TerraQueryWrapper>) -> Self {
+    pub fn new(base: MockQuerier) -> Self {
         WasmMockQuerier {
             base,
             eris_querier: ErisQuerier::default(),
@@ -104,19 +103,13 @@ impl WasmMockQuerier {
         }
     }
 
-    pub fn handle_query(&self, request: &QueryRequest<TerraQueryWrapper>) -> QuerierResult {
+    pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match &request {
-            QueryRequest::Custom(TerraQueryWrapper {
-                query_data: _,
-                route: _,
-            }) => {
-                panic!("DO NOT ENTER HERE")
-            }
             QueryRequest::Wasm(WasmQuery::Smart { contract_addr, msg }) => {
-                match from_binary(msg).unwrap() {
+                match from_json(msg).unwrap() {
                     AvaiableQueries::State {} => {
                         if self.eris_querier.contract == *contract_addr {
-                            SystemResult::Ok(ContractResult::from(to_binary(
+                            SystemResult::Ok(ContractResult::from(to_json_binary(
                                 &QueryErisHubResponse::State {
                                     exchange_rate: self.eris_querier.value,
                                 },
@@ -135,7 +128,7 @@ impl WasmMockQuerier {
                             asset_infos.push(AssetInfo::NativeToken { denom: contract })
                         }
 
-                        SystemResult::Ok(ContractResult::from(to_binary(&PairInfo {
+                        SystemResult::Ok(ContractResult::from(to_json_binary(&PairInfo {
                             asset_infos,
                             contract_addr: Addr::unchecked(contract_addr),
                             liquidity_token: Addr::unchecked(pool.lp.clone()),
@@ -147,41 +140,47 @@ impl WasmMockQuerier {
                         let mut assets: Vec<Asset> = vec![];
 
                         for (contract, amount) in pool.clone().assets {
+                            let amount_u128 = amount.try_into().unwrap();
+
                             assets.push(Asset {
                                 info: AssetInfo::NativeToken { denom: contract },
-                                amount: Uint128::from(amount),
+                                amount: amount_u128,
                             })
                         }
 
-                        SystemResult::Ok(ContractResult::from(to_binary(&PoolResponse {
+                        SystemResult::Ok(ContractResult::from(to_json_binary(&PoolResponse {
                             assets,
-                            total_share: Uint128::from(
-                                self.token_supply.get(&pool.lp).unwrap().to_owned(),
-                            ),
+                            total_share: self
+                                .token_supply
+                                .get(&pool.lp)
+                                .unwrap()
+                                .to_owned()
+                                .try_into()
+                                .unwrap(),
                         })))
                     }
                     AvaiableQueries::Deposit { lp_token, user } => {
-                        let staked = Uint128::from(
-                            self.generator_lp_stake
-                                .get(&(Addr::unchecked(user), Addr::unchecked(lp_token)))
-                                .unwrap()
-                                .to_owned(),
-                        );
+                        let staked = self
+                            .generator_lp_stake
+                            .get(&(Addr::unchecked(user), Addr::unchecked(lp_token)))
+                            .unwrap()
+                            .to_owned();
 
-                        SystemResult::Ok(ContractResult::from(to_binary(&staked)))
+                        SystemResult::Ok(ContractResult::from(to_json_binary(&staked)))
                     }
 
                     AvaiableQueries::TokenInfo {} => {
-                        SystemResult::Ok(ContractResult::from(to_binary(&TokenInfoResponse {
+                        SystemResult::Ok(ContractResult::from(to_json_binary(&TokenInfoResponse {
                             name: "not_defined".to_string(),
                             symbol: "not_defined".to_string(),
                             decimals: 6_u8,
-                            total_supply: Uint128::from(
-                                self.token_supply
-                                    .get(&Addr::unchecked(contract_addr))
-                                    .unwrap()
-                                    .to_owned(),
-                            ),
+                            total_supply: self
+                                .token_supply
+                                .get(&Addr::unchecked(contract_addr))
+                                .unwrap()
+                                .to_owned()
+                                .try_into()
+                                .unwrap(),
                         })))
                     }
                 }

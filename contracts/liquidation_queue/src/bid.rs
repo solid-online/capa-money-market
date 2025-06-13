@@ -5,14 +5,13 @@ use crate::state::{
     read_epoch_scale_sum, read_or_create_bid_pool, read_total_bids, remove_bid, store_bid,
     store_bid_pool, store_epoch_scale_sum, store_total_bids, Bid, BidPool, CollateralInfo, Config,
 };
-use bigint::U256;
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::{
-    attr, to_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
-    Storage, Uint128, WasmMsg,
+    attr, to_json_binary, Addr, CosmosMsg, Decimal256, DepsMut, Env, MessageInfo, Response,
+    StdError, StdResult, Storage, Uint128, Uint256, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
 use moneymarket::liquidation::MarketExecuteMsg;
+use std::convert::TryInto;
 
 use moneymarket::oracle::PriceResponse;
 use moneymarket::querier::{query_price, TimeConstraints};
@@ -264,9 +263,9 @@ pub fn retract_bid(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.stable_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: info.sender.to_string(),
-                amount: withdraw_amount.into(),
+                amount: withdraw_amount.try_into().unwrap(),
             })?,
         }));
     }
@@ -381,10 +380,10 @@ pub fn execute_liquidation(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.stable_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Send {
+            msg: to_json_binary(&Cw20ExecuteMsg::Send {
                 contract: repay_address,
-                amount: repay_amount.into(),
-                msg: to_binary(&MarketExecuteMsg::RepayStableFromLiquidation {
+                amount: repay_amount.try_into().unwrap(),
+                msg: to_json_binary(&MarketExecuteMsg::RepayStableFromLiquidation {
                     borrower: borrower_address,
                 })?,
             })?,
@@ -394,9 +393,9 @@ pub fn execute_liquidation(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.stable_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: fee_address,
-                amount: bid_fee.into(),
+                amount: bid_fee.try_into().unwrap(),
             })?,
         }));
     }
@@ -405,9 +404,9 @@ pub fn execute_liquidation(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.stable_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: liquidator,
-                amount: liquidator_fee.into(),
+                amount: liquidator_fee.try_into().unwrap(),
             })?,
         }));
     }
@@ -520,9 +519,9 @@ pub fn claim_liquidations(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: collateral_token.clone(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: info.sender.to_string(),
-                amount: claim_amount.into(),
+                amount: claim_amount.try_into().unwrap(),
             })?,
         }));
     }
@@ -564,18 +563,18 @@ fn execute_pool_liquidation(
 
     if pool_required_stable > bid_pool.total_bid_amount {
         pool_required_stable = bid_pool.total_bid_amount;
-        pool_collateral_to_liquidate = pool_required_stable / premium_price;
+
+        pool_collateral_to_liquidate = pool_required_stable
+            .multiply_ratio(Decimal256::one().atomics(), premium_price.atomics());
     } else {
         *filled = true;
     }
 
-    // E / D
-    let col_per_bid: Decimal256 = Decimal256::from_uint256(pool_collateral_to_liquidate)
-        / Decimal256::from_uint256(bid_pool.total_bid_amount);
+    let col_per_bid: Decimal256 =
+        Decimal256::from_ratio(pool_collateral_to_liquidate, bid_pool.total_bid_amount);
 
-    // Q / D
-    let expense_per_bid: Decimal256 = Decimal256::from_uint256(pool_required_stable)
-        / Decimal256::from_uint256(bid_pool.total_bid_amount);
+    let expense_per_bid: Decimal256 =
+        Decimal256::from_ratio(pool_required_stable, bid_pool.total_bid_amount);
 
     ///////// Update sum /////////
     // E / D * P
@@ -609,10 +608,17 @@ fn execute_pool_liquidation(
 
         // check if scale needs to be increased (in case product truncates to zero)
         let new_product = bid_pool.product_snapshot * product;
-        bid_pool.product_snapshot = if new_product < Decimal256(U256::from(1_000_000_000u64)) {
+        let threshold = Decimal256::from_ratio(Uint256::from(1_000_000_000u64), Uint256::one());
+
+        bid_pool.product_snapshot = if new_product < threshold {
             bid_pool.current_scale += Uint128::from(1u128);
 
-            Decimal256(bid_pool.product_snapshot.0 * U256::from(1_000_000_000u64)) * product
+            let scaled_snapshot = Decimal256::from_ratio(
+                bid_pool.product_snapshot.atomics() * Uint256::from(1_000_000_000u64),
+                Uint256::one(),
+            );
+
+            scaled_snapshot * product
         } else {
             new_product
         };
@@ -631,20 +637,24 @@ pub(crate) fn calculate_remaining_bid(
         // pool was emptied, return 0
         Decimal256::zero()
     } else if scale_diff.is_zero() {
-        Decimal256::from_uint256(bid.amount) * bid_pool.product_snapshot / bid.product_snapshot
+        Decimal256::from_ratio(bid.amount, Uint256::one()) * bid_pool.product_snapshot
+            / bid.product_snapshot
     } else if scale_diff == Uint128::from(1u128) {
-        // product has been scaled
-        let scaled_remaining_bid =
-            Decimal256::from_uint256(bid.amount) * bid_pool.product_snapshot / bid.product_snapshot;
+        let scaled_remaining_bid = Decimal256::from_ratio(bid.amount, Uint256::one())
+            * bid_pool.product_snapshot
+            / bid.product_snapshot;
 
-        Decimal256(scaled_remaining_bid.0 / U256::from(1_000_000_000u64))
+        Decimal256::from_ratio(
+            scaled_remaining_bid.atomics(),
+            Uint256::from(1_000_000_000u64),
+        )
     } else {
         Decimal256::zero()
     };
 
     let remaining_bid = remaining_bid_dec * Uint256::one();
     // stacks the residue when converting to integer
-    let bid_residue = remaining_bid_dec - Decimal256::from_uint256(remaining_bid);
+    let bid_residue = remaining_bid_dec - Decimal256::from_ratio(remaining_bid, Uint256::one());
 
     Ok((remaining_bid, bid_residue))
 }
@@ -671,20 +681,21 @@ pub(crate) fn calculate_liquidated_collateral(
         bid.epoch_snapshot,
         bid.scale_snapshot + Uint128::from(1u128),
     ) {
-        Decimal256(
-            (second_scale_sum_snapshot.0 - reference_sum_snapshot.0) / U256::from(1_000_000_000u64),
+        Decimal256::from_ratio(
+            second_scale_sum_snapshot.atomics() - reference_sum_snapshot.atomics(),
+            Uint256::from(1_000_000_000u64),
         )
     } else {
         Decimal256::zero()
     };
 
-    let liquidated_collateral_dec = Decimal256::from_uint256(bid.amount)
+    let liquidated_collateral_dec = Decimal256::from_ratio(bid.amount, Uint256::one())
         * (first_portion + second_portion)
         / bid.product_snapshot;
     let liquidated_collateral = liquidated_collateral_dec * Uint256::one();
     // stacks the residue when converting to integer
     let residue_collateral =
-        liquidated_collateral_dec - Decimal256::from_uint256(liquidated_collateral);
+        liquidated_collateral_dec - Decimal256::from_ratio(liquidated_collateral, Uint256::one());
 
     Ok((liquidated_collateral, residue_collateral))
 }
@@ -693,7 +704,7 @@ fn claim_col_residue(bid_pool: &mut BidPool) -> Uint256 {
     let claimable = bid_pool.residue_collateral * Uint256::one();
     if !claimable.is_zero() {
         bid_pool.residue_collateral =
-            bid_pool.residue_collateral - Decimal256::from_uint256(claimable);
+            bid_pool.residue_collateral - Decimal256::from_ratio(claimable, Uint256::one());
     }
     claimable
 }
@@ -701,7 +712,8 @@ fn claim_col_residue(bid_pool: &mut BidPool) -> Uint256 {
 fn claim_bid_residue(bid_pool: &mut BidPool) -> Uint256 {
     let claimable = bid_pool.residue_bid * Uint256::one();
     if !claimable.is_zero() {
-        bid_pool.residue_bid = bid_pool.residue_bid - Decimal256::from_uint256(claimable);
+        bid_pool.residue_bid =
+            bid_pool.residue_bid - Decimal256::from_ratio(claimable, Uint256::one());
     }
     claimable
 }

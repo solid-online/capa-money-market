@@ -1,9 +1,7 @@
-use cosmwasm_bignumber::math::Uint256;
-#[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult,
+    attr, from_json, to_json_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, Uint256,
 };
 
 use crate::collateral::{
@@ -22,7 +20,7 @@ use moneymarket::custody_deposit_cap::{
     ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
 };
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
@@ -49,7 +47,7 @@ pub fn instantiate(
     Ok(Response::default())
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn execute(
     deps: DepsMut,
     _env: Env,
@@ -103,7 +101,7 @@ pub fn receive_cw20(
     let contract_addr = info.sender;
     let contract_balance = read_contract_balance_info(deps.storage)?;
 
-    match from_binary(&cw20_msg.msg) {
+    match from_json(&cw20_msg.msg) {
         Ok(Cw20HookMsg::DepositCollateral {}) => {
             // only asset contract can execute this message
             let config: Config = read_config(deps.storage)?;
@@ -111,11 +109,13 @@ pub fn receive_cw20(
                 return Err(ContractError::Unauthorized {});
             }
 
+            let cw20_amount: Uint256 = cw20_msg.amount.into();
+
             // check if the contract balance is less than max deposit
-            let new_balance = contract_balance.balance + cw20_msg.amount.into();
+            let new_balance = contract_balance.balance + cw20_amount;
 
             if new_balance > config.max_deposit {
-                return Err(ContractError::InvalidMaxDeposit(new_balance.into()));
+                return Err(ContractError::InvalidMaxDeposit(new_balance));
             }
 
             let cw20_sender_addr = deps.api.addr_validate(&cw20_msg.sender)?;
@@ -165,15 +165,15 @@ pub fn update_config(
     Ok(Response::new().add_attributes(vec![attr("action", "update_config")]))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         QueryMsg::Borrower { address } => {
             let addr = deps.api.addr_validate(&address)?;
-            to_binary(&query_borrower(deps, addr)?)
+            to_json_binary(&query_borrower(deps, addr)?)
         }
-        QueryMsg::Borrowers { start_after, limit } => to_binary(&query_borrowers(
+        QueryMsg::Borrowers { start_after, limit } => to_json_binary(&query_borrowers(
             deps,
             optional_addr_validate(deps.api, start_after)?,
             limit,
@@ -194,7 +194,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default())
 }

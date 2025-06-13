@@ -2,20 +2,19 @@ use moneymarket::oracle::PriceResponse;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, from_slice, to_binary, Addr, Api, CanonicalAddr, Coin, ContractResult, OwnedDeps,
-    Querier, QuerierResult, QueryRequest, SystemError, SystemResult, Uint128, WasmQuery,
+    from_json, to_json_binary, Addr, Api, CanonicalAddr, Coin, ContractResult,
+    Decimal256, OwnedDeps, Querier, QuerierResult, QueryRequest, SystemError, SystemResult,
+    Uint128, Uint256, WasmQuery,
 };
 use cosmwasm_storage::to_length_prefixed;
 use std::collections::HashMap;
 use std::marker::PhantomData;
-
+use cosmwasm_std::Empty;
 use cw20::TokenInfoResponse;
 use moneymarket::interest_model::BorrowRateResponse;
 use moneymarket::overseer::{BorrowLimitResponse, ConfigResponse};
-use terra_cosmwasm::TerraQueryWrapper;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -55,7 +54,7 @@ pub fn mock_dependencies(
 }
 
 pub struct WasmMockQuerier {
-    base: MockQuerier<TerraQueryWrapper>,
+    base: MockQuerier,
     token_querier: TokenQuerier,
     borrow_rate_querier: BorrowRateQuerier,
     borrow_limit_querier: BorrowLimitQuerier,
@@ -150,7 +149,7 @@ pub(crate) fn oracle_price_to_map(
 impl Querier for WasmMockQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         // MockQuerier doesn't support Custom, so we ignore it completely here
-        let request: QueryRequest<TerraQueryWrapper> = match from_slice(bin_request) {
+        let request: QueryRequest<Empty> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
@@ -164,19 +163,13 @@ impl Querier for WasmMockQuerier {
 }
 
 impl WasmMockQuerier {
-    pub fn handle_query(&self, request: &QueryRequest<TerraQueryWrapper>) -> QuerierResult {
+    pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match &request {
-            QueryRequest::Custom(TerraQueryWrapper {
-                query_data: _,
-                route: _,
-            }) => {
-                panic!("DO NOT ENTER HERE")
-            }
             QueryRequest::Wasm(WasmQuery::Smart { contract_addr, msg }) => {
-                match from_binary(msg).unwrap() {
+                match from_json(msg).unwrap() {
                     QueryMsg::BorrowRate {} => {
                         match self.borrow_rate_querier.borrower_rate.get(contract_addr) {
-                            Some(v) => SystemResult::Ok(ContractResult::from(to_binary(
+                            Some(v) => SystemResult::Ok(ContractResult::from(to_json_binary(
                                 &BorrowRateResponse { rate: *v },
                             ))),
                             None => SystemResult::Err(SystemError::InvalidRequest {
@@ -189,7 +182,7 @@ impl WasmMockQuerier {
                         borrower,
                         block_time: _,
                     } => match self.borrow_limit_querier.borrow_limit.get(&borrower) {
-                        Some(v) => SystemResult::Ok(ContractResult::from(to_binary(
+                        Some(v) => SystemResult::Ok(ContractResult::from(to_json_binary(
                             &BorrowLimitResponse {
                                 borrower,
                                 borrow_limit: *v,
@@ -201,7 +194,7 @@ impl WasmMockQuerier {
                         }),
                     },
                     QueryMsg::Config {} => {
-                        SystemResult::Ok(ContractResult::from(to_binary(&ConfigResponse {
+                        SystemResult::Ok(ContractResult::from(to_json_binary(&ConfigResponse {
                             owner_addr: "".to_string(),
                             oracle_contract: "".to_string(),
                             market_contract: "".to_string(),
@@ -214,13 +207,13 @@ impl WasmMockQuerier {
 
                     QueryMsg::Price { base, quote } => {
                         match self.oracle_price_querier.oracle_price.get(&(base, quote)) {
-                            Some(v) => {
-                                SystemResult::Ok(ContractResult::from(to_binary(&PriceResponse {
+                            Some(v) => SystemResult::Ok(ContractResult::from(to_json_binary(
+                                &PriceResponse {
                                     rate: v.0,
                                     last_updated_base: v.1,
                                     last_updated_quote: v.2,
-                                })))
-                            }
+                                },
+                            ))),
                             None => SystemResult::Err(SystemError::InvalidRequest {
                                 error: "No oracle price exists".to_string(),
                                 request: msg.as_slice().into(),
@@ -240,7 +233,7 @@ impl WasmMockQuerier {
                             total_supply += balance.1;
                         }
 
-                        SystemResult::Ok(ContractResult::from(to_binary(&TokenInfoResponse {
+                        SystemResult::Ok(ContractResult::from(to_json_binary(&TokenInfoResponse {
                             name: "mAPPL".to_string(),
                             symbol: "mAPPL".to_string(),
                             decimals: 6,
@@ -282,7 +275,7 @@ impl WasmMockQuerier {
                             })
                         }
                     };
-                    SystemResult::Ok(ContractResult::from(to_binary(&balance)))
+                    SystemResult::Ok(ContractResult::from(to_json_binary(&balance)))
                 } else {
                     panic!("DO NOT ENTER HERE")
                 }
@@ -293,7 +286,7 @@ impl WasmMockQuerier {
 }
 
 impl WasmMockQuerier {
-    pub fn new(base: MockQuerier<TerraQueryWrapper>) -> Self {
+    pub fn new(base: MockQuerier) -> Self {
         WasmMockQuerier {
             base,
             token_querier: TokenQuerier::default(),

@@ -3,7 +3,7 @@ use std::ops::Sub;
 use crate::error::ContractError;
 use crate::state::{read_config, read_state, store_state, Config, State};
 use cosmwasm_std::{
-    attr, to_binary, Addr, BankMsg, CosmosMsg, DepsMut, MessageInfo, Response, WasmMsg,
+    attr, to_json_binary, Addr, BankMsg, CosmosMsg, DepsMut, MessageInfo, Response, WasmMsg,
 };
 use cosmwasm_std::{Coin, Uint128};
 use cw20::Cw20ExecuteMsg;
@@ -43,7 +43,7 @@ pub fn bond(
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.wrapper_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
+            msg: to_json_binary(&Cw20ExecuteMsg::Mint {
                 recipient: receiver.to_string(),
                 amount,
             })?,
@@ -75,7 +75,7 @@ pub fn unbound(deps: DepsMut, receiver: Addr, amount: Uint128) -> Result<Respons
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: config.wrapper_contract.to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Burn { amount })?,
+                msg: to_json_binary(&Cw20ExecuteMsg::Burn { amount })?,
             }),
             CosmosMsg::Bank(BankMsg::Send {
                 to_address: receiver.to_string(),

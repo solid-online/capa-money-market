@@ -1,5 +1,32 @@
 [workspace]
 members = ["packages/*", "contracts/*"]
+resolver = "2"
+
+[workspace.package]
+version             = "0.1.0"
+edition             = "2021"
+authors             = ["BIG Labs"]
+
+[workspace.dependencies]
+astroport           = "3.6.1"
+moneymarket         = { path = "packages/moneymarket" }
+cosmwasm-schema     = "1.5.0"
+cosmwasm-std        = "1.5.0"
+cosmwasm-storage    = "1.5.2"
+terraswap           = "2.3.0"
+cw20                = "1.1"
+cw20-base           = { version = "0.13.2", features = ["library"] }
+cw-multi-test       = "0.20.0"
+cw-storage-plus     = "1.2.0"
+prost               = "0.12.4"
+schemars            = "0.8.16"
+serde               = { version = "1.0.194", default-features = false, features = ["derive"] }
+serde_json          = "1.0.94"
+thiserror           = "1.0.56"
+protobuf = { version = "2", features = ["with-bytes"] }
+rhaki_cw_mock_http_querier = "0.1.0"
+uint = "0.9"
+itertools = "0.10"
 
 [profile.release.package.moneymarket]
 opt-level = 3

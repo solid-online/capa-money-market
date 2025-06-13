@@ -3,9 +3,8 @@ use crate::contract::{execute, instantiate, query};
 use crate::error::ContractError;
 use crate::testing::mock_querier::mock_dependencies;
 
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{attr, from_binary, to_binary, CosmosMsg, SubMsg, WasmMsg};
+use cosmwasm_std::{attr, from_json, to_json_binary, CosmosMsg, SubMsg, WasmMsg, Decimal256, Uint256};
 
 use moneymarket::custody::ExecuteMsg as CustodyExecuteMsg;
 
@@ -34,7 +33,7 @@ fn proper_initialization() {
     let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
     let query_res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&query_res).unwrap();
+    let config_res: ConfigResponse = from_json(&query_res).unwrap();
     assert_eq!(
         config_res,
         ConfigResponse {
@@ -81,7 +80,7 @@ fn update_config() {
 
     // it worked, let's query the state
     let res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&res).unwrap();
+    let config_res: ConfigResponse = from_json(&res).unwrap();
     assert_eq!("owner1".to_string(), config_res.owner_addr);
 
     // update left items
@@ -98,7 +97,7 @@ fn update_config() {
 
     // it worked, let's query the state
     let res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&res).unwrap();
+    let config_res: ConfigResponse = from_json(&res).unwrap();
     assert_eq!("owner1".to_string(), config_res.owner_addr);
     assert_eq!("oracle1".to_string(), config_res.oracle_contract);
     assert_eq!("liquidation1".to_string(), config_res.liquidation_contract);
@@ -143,7 +142,7 @@ fn whitelist() {
         symbol: "bluna".to_string(),
         collateral_token: "bluna".to_string(),
         custody_contract: "custody".to_string(),
-        max_ltv: Decimal256::from_ratio(100, 1),
+        max_ltv: Decimal256::from_ratio(100u64, 1u64),
     };
 
     let info = mock_info("owner", &[]);
@@ -206,7 +205,7 @@ fn whitelist() {
         },
     )
     .unwrap();
-    let whitelist_res: WhitelistResponse = from_binary(&res).unwrap();
+    let whitelist_res: WhitelistResponse = from_json(&res).unwrap();
     assert_eq!(
         whitelist_res,
         WhitelistResponse {
@@ -239,7 +238,7 @@ fn whitelist() {
     let msg = ExecuteMsg::UpdateWhitelist {
         collateral_token: "bluna".to_string(),
         custody_contract: Some("custody2".to_string()),
-        max_ltv: Some(Decimal256::from_ratio(105, 1)),
+        max_ltv: Some(Decimal256::from_ratio(105u64, 1u64)),
     };
 
     let info = mock_info("owner", &[]);
@@ -297,7 +296,7 @@ fn whitelist() {
         },
     )
     .unwrap();
-    let whitelist_res: WhitelistResponse = from_binary(&res).unwrap();
+    let whitelist_res: WhitelistResponse = from_json(&res).unwrap();
     assert_eq!(
         whitelist_res,
         WhitelistResponse {
@@ -369,7 +368,7 @@ fn lock_collateral() {
             SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "custody_bluna".to_string(),
                 funds: vec![],
-                msg: to_binary(&CustodyExecuteMsg::LockCollateral {
+                msg: to_json_binary(&CustodyExecuteMsg::LockCollateral {
                     borrower: "addr0000".to_string(),
                     amount: Uint256::from(1000000u64),
                 })
@@ -378,7 +377,7 @@ fn lock_collateral() {
             SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "custody_batom".to_string(),
                 funds: vec![],
-                msg: to_binary(&CustodyExecuteMsg::LockCollateral {
+                msg: to_json_binary(&CustodyExecuteMsg::LockCollateral {
                     borrower: "addr0000".to_string(),
                     amount: Uint256::from(10000000u64),
                 })
@@ -410,7 +409,7 @@ fn lock_collateral() {
         },
     )
     .unwrap();
-    let collaterals_res: CollateralsResponse = from_binary(&res).unwrap();
+    let collaterals_res: CollateralsResponse = from_json(&res).unwrap();
     assert_eq!(
         collaterals_res,
         CollateralsResponse {
@@ -431,7 +430,7 @@ fn lock_collateral() {
         },
     )
     .unwrap();
-    let all_collaterals_res: AllCollateralsResponse = from_binary(&res).unwrap();
+    let all_collaterals_res: AllCollateralsResponse = from_json(&res).unwrap();
     assert_eq!(
         all_collaterals_res,
         AllCollateralsResponse {
@@ -540,7 +539,9 @@ fn unlock_collateral() {
     };
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg);
     match res {
-        Err(ContractError::UnlockTooLarge(12599999400)) => (),
+        Err(ContractError::UnlockTooLarge(value)) => {
+            assert_eq!(value, Uint256::from(12599999400u64));
+        }
         _ => panic!("DO NOT ENTER HERE"),
     }
 
@@ -549,7 +550,9 @@ fn unlock_collateral() {
     };
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg);
     match res {
-        Err(ContractError::UnlockTooLarge(12599998800)) => (),
+        Err(ContractError::UnlockTooLarge(value)) => {
+            assert_eq!(value, Uint256::from(12599998800u64));
+        }
         _ => panic!("DO NOT ENTER HERE"),
     }
 
@@ -566,7 +569,7 @@ fn unlock_collateral() {
         },
     )
     .unwrap();
-    let borrow_limit_res: BorrowLimitResponse = from_binary(&res).unwrap();
+    let borrow_limit_res: BorrowLimitResponse = from_json(&res).unwrap();
     assert_eq!(borrow_limit_res.borrow_limit, Uint256::from(12600000000u64),);
 
     // Cannot unlock 2bluna
@@ -575,7 +578,9 @@ fn unlock_collateral() {
     };
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg);
     match res {
-        Err(ContractError::UnlockTooLarge(12599998800)) => (),
+        Err(ContractError::UnlockTooLarge(value)) => {
+            assert_eq!(value, Uint256::from(12599998800u64));
+        }
         _ => panic!("DO NOT ENTER HERE"),
     }
 
@@ -589,7 +594,7 @@ fn unlock_collateral() {
         vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "custody_bluna".to_string(),
             funds: vec![],
-            msg: to_binary(&CustodyExecuteMsg::UnlockCollateral {
+            msg: to_json_binary(&CustodyExecuteMsg::UnlockCollateral {
                 borrower: "addr0000".to_string(),
                 amount: Uint256::one(),
             })
@@ -623,7 +628,7 @@ fn unlock_collateral() {
             SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "custody_bluna".to_string(),
                 funds: vec![],
-                msg: to_binary(&CustodyExecuteMsg::UnlockCollateral {
+                msg: to_json_binary(&CustodyExecuteMsg::UnlockCollateral {
                     borrower: "addr0000".to_string(),
                     amount: Uint256::from(1u128),
                 })
@@ -632,7 +637,7 @@ fn unlock_collateral() {
             SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "custody_batom".to_string(),
                 funds: vec![],
-                msg: to_binary(&CustodyExecuteMsg::UnlockCollateral {
+                msg: to_json_binary(&CustodyExecuteMsg::UnlockCollateral {
                     borrower: "addr0000".to_string(),
                     amount: Uint256::from(1u128),
                 })
@@ -749,7 +754,7 @@ fn liquidate_collateral() {
             SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "custody_batom".to_string(),
                 funds: vec![],
-                msg: to_binary(&CustodyExecuteMsg::LiquidateCollateral {
+                msg: to_json_binary(&CustodyExecuteMsg::LiquidateCollateral {
                     liquidator: "addr0001".to_string(),
                     borrower: "addr0000".to_string(),
                     amount: Uint256::from(100000u64),
@@ -759,7 +764,7 @@ fn liquidate_collateral() {
             SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "custody_bluna".to_string(),
                 funds: vec![],
-                msg: to_binary(&CustodyExecuteMsg::LiquidateCollateral {
+                msg: to_json_binary(&CustodyExecuteMsg::LiquidateCollateral {
                     liquidator: "addr0001".to_string(),
                     borrower: "addr0000".to_string(),
                     amount: Uint256::from(10000u64),
@@ -777,7 +782,7 @@ fn liquidate_collateral() {
         },
     )
     .unwrap();
-    let collaterals_res: CollateralsResponse = from_binary(&res).unwrap();
+    let collaterals_res: CollateralsResponse = from_json(&res).unwrap();
     assert_eq!(
         collaterals_res,
         CollateralsResponse {

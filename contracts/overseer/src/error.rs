@@ -1,4 +1,4 @@
-use cosmwasm_std::{OverflowError, StdError};
+use cosmwasm_std::{OverflowError, StdError, Uint256};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -25,7 +25,7 @@ pub enum ContractError {
     UnlockExceedsLocked {},
 
     #[error("Unlock amount too high; Loan liability becomes greater than borrow limit: {0}")]
-    UnlockTooLarge(u128),
+    UnlockTooLarge(Uint256),
 
     #[error("max_ltv should be greater then zero and lower then 100")]
     InvalidMaxLtv {},

@@ -1,10 +1,9 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_bignumber::math::Uint256;
 use cosmwasm_std::{
-    to_binary, Addr, AllBalanceResponse, BalanceResponse, BankQuery, Coin, Deps, QueryRequest,
-    StdError, StdResult, Uint128, WasmQuery,
+    to_json_binary, Addr, AllBalanceResponse, BalanceResponse, BankQuery, Coin, Deps, QueryRequest,
+    StdError, StdResult, Uint128, WasmQuery,Uint256,
 };
 use cw20::{Cw20QueryMsg, TokenInfoResponse};
 
@@ -39,7 +38,7 @@ pub fn query_token_balance(
         .querier
         .query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: contract_addr.to_string(),
-            msg: to_binary(&Cw20QueryMsg::Balance {
+            msg: to_json_binary(&Cw20QueryMsg::Balance {
                 address: account_addr.to_string(),
             })?,
         }))
@@ -53,10 +52,10 @@ pub fn query_supply(deps: Deps, contract_addr: Addr) -> StdResult<Uint256> {
     let token_info: TokenInfoResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: contract_addr.to_string(),
-            msg: to_binary(&Cw20QueryMsg::TokenInfo {})?,
+            msg: to_json_binary(&Cw20QueryMsg::TokenInfo {})?,
         }))?;
 
-    Ok(Uint256::from(token_info.total_supply))
+    Ok(token_info.total_supply.into())
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -76,7 +75,7 @@ pub fn query_price(
     let oracle_price: PriceResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: oracle_addr.to_string(),
-            msg: to_binary(&OracleQueryMsg::Price { base, quote })?,
+            msg: to_json_binary(&OracleQueryMsg::Price { base, quote })?,
         }))?;
 
     if let Some(time_contraints) = time_contraints {

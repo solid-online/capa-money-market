@@ -1,16 +1,13 @@
-#[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-
 use crate::borrow::{borrow_stable, query_borrower_info, query_borrower_infos, repay_stable};
 use crate::error::ContractError;
 use crate::flash_mint::{flash_mint, private_flash_end};
 use crate::response::MsgInstantiateContractResponse;
 use crate::state::{read_config, read_state, store_config, store_state, Config, State};
 
-use cosmwasm_bignumber::math::Decimal256;
 use cosmwasm_std::{
-    attr, from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Reply,
-    Response, StdError, StdResult, SubMsg, Uint128, WasmMsg,
+    attr, from_json, to_json_binary, Addr, Binary, CosmosMsg, Decimal256, Deps, DepsMut, Env,
+    MessageInfo, Reply, Response, StdError, StdResult, SubMsg, Uint128, WasmMsg,
 };
 use cw20::{Cw20Coin, Cw20ReceiveMsg, MinterResponse};
 
@@ -23,7 +20,7 @@ use protobuf::Message;
 
 pub const INITIAL_DEPOSIT_AMOUNT: u128 = 1000000;
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -61,7 +58,7 @@ pub fn instantiate(
                 funds: vec![],
                 label: "stable".to_string(),
 
-                msg: to_binary(&TokenInstantiateMsg {
+                msg: to_json_binary(&TokenInstantiateMsg {
                     name: "Solid".to_string(),
                     symbol: "SOLID".to_string(),
                     decimals: 6u8,
@@ -80,7 +77,7 @@ pub fn instantiate(
     )
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -150,7 +147,7 @@ pub fn execute(
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg.id {
         1 => {
@@ -178,7 +175,7 @@ pub fn receive_cw20(
     cw20_msg: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
     let contract_addr = info.sender;
-    match from_binary(&cw20_msg.msg) {
+    match from_json(&cw20_msg.msg) {
         Ok(Cw20HookMsg::RepayStable {}) => {
             let config: Config = read_config(deps.storage)?;
             if contract_addr != config.stable_contract {
@@ -298,16 +295,16 @@ pub fn update_config(
     Ok(Response::new().add_attributes(vec![attr("action", "update_config")]))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::State {} => to_binary(&query_state(deps)?),
-        QueryMsg::BorrowerInfo { borrower } => to_binary(&query_borrower_info(
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::State {} => to_json_binary(&query_state(deps)?),
+        QueryMsg::BorrowerInfo { borrower } => to_json_binary(&query_borrower_info(
             deps,
             deps.api.addr_validate(&borrower)?,
         )?),
-        QueryMsg::BorrowerInfos { start_after, limit } => to_binary(&query_borrower_infos(
+        QueryMsg::BorrowerInfos { start_after, limit } => to_json_binary(&query_borrower_infos(
             deps,
             optional_addr_validate(deps.api, start_after)?,
             limit,
@@ -336,7 +333,7 @@ pub fn query_state(deps: Deps) -> StdResult<StateResponse> {
     })
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default())
 }

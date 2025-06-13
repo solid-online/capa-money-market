@@ -1,9 +1,8 @@
 use crate::contract::{execute, instantiate, query};
 use crate::error::ContractError;
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, Isqrt, OwnedDeps, QueryRequest, Uint256 as StdUint256,
+    from_json, to_json_binary, Addr, Isqrt, OwnedDeps, QueryRequest, Uint256 ,Decimal256,
 };
 use moneymarket::oracle::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, PathKey, PriceResponse, PricesResponse,
@@ -35,7 +34,7 @@ fn proper_initialization() {
 
     // it worked, let's query the state
     let res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-    let value: ConfigResponse = from_binary(&res).unwrap();
+    let value: ConfigResponse = from_json(&res).unwrap();
     assert_eq!("owner0000", value.owner.as_str());
     assert_eq!("base0000", &value.base_asset);
 }
@@ -63,7 +62,7 @@ fn update_config() {
 
     // it worked, let's query the state
     let res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-    let value: ConfigResponse = from_binary(&res).unwrap();
+    let value: ConfigResponse = from_json(&res).unwrap();
     assert_eq!("owner0001", value.owner.as_str());
     assert_eq!("base0000", &value.base_asset);
 
@@ -121,7 +120,7 @@ fn update_source() {
         quote: "base0000".to_string(),
     };
 
-    let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+    let res: PriceResponse = from_json(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
     assert_eq!(res.rate, price_luna);
 
@@ -180,7 +179,7 @@ fn update_source() {
         quote: "base0000".to_string(),
     };
 
-    let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+    let res: PriceResponse = from_json(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
     println!("{}", res.rate);
     println!("{}", price_luna);
@@ -255,7 +254,7 @@ fn feed_price() {
         },
     )
     .unwrap();
-    let value: PriceResponse = from_binary(&res).unwrap();
+    let value: PriceResponse = from_json(&res).unwrap();
 
     assert_eq!(
         value,
@@ -275,7 +274,7 @@ fn feed_price() {
         },
     )
     .unwrap();
-    let value: PriceResponse = from_binary(&res).unwrap();
+    let value: PriceResponse = from_json(&res).unwrap();
 
     assert_eq!(
         value,
@@ -295,7 +294,7 @@ fn feed_price() {
         },
     )
     .unwrap();
-    let value: PriceResponse = from_binary(&res).unwrap();
+    let value: PriceResponse = from_json(&res).unwrap();
 
     assert_eq!(
         value,
@@ -315,7 +314,7 @@ fn feed_price() {
         },
     )
     .unwrap();
-    let value: PricesResponse = from_binary(&res).unwrap();
+    let value: PricesResponse = from_json(&res).unwrap();
 
     assert_eq!(
         value,
@@ -427,7 +426,7 @@ fn lsd_price() {
             query: QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
                 contract_addr: "terra10788fkzah89xrdm27zkj5yvhj9x3494lxawzm5qq3vvxcqz2yzaqyd3enk"
                     .to_string(),
-                msg: to_binary(&AvaiableQueries::State {}).unwrap(),
+                msg: to_json_binary(&AvaiableQueries::State {}).unwrap(),
             }),
 
             path_key: vec![
@@ -453,7 +452,7 @@ fn lsd_price() {
         quote: "base0000".to_string(),
     };
 
-    let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+    let res: PriceResponse = from_json(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
     assert_eq!(
         res.rate,
@@ -467,7 +466,7 @@ fn lsd_price() {
         limit: None,
     };
 
-    let res: PricesResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+    let res: PricesResponse = from_json(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
     assert_eq!(
         res,
@@ -500,7 +499,7 @@ fn lsd_price() {
         limit: Some(2_u32),
     };
 
-    let res: PricesResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+    let res: PricesResponse = from_json(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
     assert_eq!(
         res,
@@ -526,7 +525,7 @@ fn lsd_price() {
         limit: Some(2_u32),
     };
 
-    let res: PricesResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+    let res: PricesResponse = from_json(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
     assert_eq!(
         res,
@@ -596,7 +595,7 @@ fn lsd_price_http() {
             query: QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
                 contract_addr: "terra10788fkzah89xrdm27zkj5yvhj9x3494lxawzm5qq3vvxcqz2yzaqyd3enk"
                     .to_string(),
-                msg: to_binary(&AvaiableQueries::State {}).unwrap(),
+                msg: to_json_binary(&AvaiableQueries::State {}).unwrap(),
             }),
             path_key: vec![PathKey::String("exchange_rate".to_string())],
             is_inverted: false,
@@ -613,7 +612,7 @@ fn lsd_price_http() {
         quote: "base0000".to_string(),
     };
 
-    let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+    let res: PriceResponse = from_json(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
     println!("{:?}", res);
 }
@@ -804,11 +803,11 @@ fn astroport_lp_vault() {
         quote: "base0000".to_string(),
     };
 
-    let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+    let res: PriceResponse = from_json(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
     let mul = price_luna * amount_uluna_in_pool * price_usdc * amount_usdc_in_pool;
 
-    let pool_value = StdUint256::from(2u8) * StdUint256::from_u128(mul.into()).isqrt();
+    let pool_value = Uint256::from(2u8) * mul.isqrt();
 
     let clp_price = Decimal256::from_ratio(
         Decimal256::from_ratio(staked_lp_usdc_uluna, supply_lp_usdc_uluna)
@@ -924,7 +923,7 @@ fn astroport_lp_vault_http() {
         quote: "base0000".to_string(),
     };
 
-    let res: PriceResponse = from_binary(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
+    let res: PriceResponse = from_json(&query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap();
 
     println!("{:?}", res);
     println!("{:?}", res.rate * Uint256::from(1000_u128))

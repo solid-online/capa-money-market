@@ -6,9 +6,8 @@ use astroport::{
     pair::{PoolResponse, QueryMsg as PairQueryMsg},
     querier::query_supply as cw20_query_supply,
 };
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::{
-    to_binary, Addr, Deps, Env, Isqrt, QueryRequest, Uint128, Uint256 as StdUint256, WasmQuery,
+    to_json_binary, Addr, Deps, Env, Isqrt, QueryRequest, Uint128, Uint256 , WasmQuery,Decimal256,
 };
 use moneymarket::oracle::{PathKey, Source};
 use serde_json::Value;
@@ -99,7 +98,7 @@ pub fn get_price(deps: Deps, env: Env, asset: String) -> Result<PriceInfo, Contr
 pub fn pool_infos(deps: Deps, pool_contract: Addr) -> Result<(Vec<String>, Addr), ContractError> {
     let res: PairInfo = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: pool_contract.to_string(),
-        msg: to_binary(&PairQueryMsg::Pair {})?,
+        msg: to_json_binary(&PairQueryMsg::Pair {})?,
     }))?;
 
     let vec_contract_address: Vec<String> = res
@@ -125,7 +124,7 @@ pub fn pool_tokens_amount_and_price(
 ) -> Result<Vec<(Uint256, PriceInfo)>, ContractError> {
     let res: PoolResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: pool_contract.to_string(),
-        msg: to_binary(&PairQueryMsg::Pool {})?,
+        msg: to_json_binary(&PairQueryMsg::Pool {})?,
     }))?;
 
     let vec_address_amount: Result<Vec<(Uint256, PriceInfo)>, ContractError> = res
@@ -186,7 +185,7 @@ pub fn astroport_lp_vault_price(
     }
 
     // Convert pool_value from cosmwasm_bignumber::math::Decimal256 to cosmwasm_std::Uint256 in order to perform .isqrt opertation
-    let pool_value = StdUint256::from(2u8) * StdUint256::from_u128(pool_value.into()).isqrt();
+    let pool_value = Uint256::from(2u8) * pool_value.isqrt();
 
     let clp_price = Decimal256::from_ratio(
         vault_lp_share * Uint256::from_str(pool_value.to_string().as_str())?,
@@ -208,7 +207,7 @@ pub fn astroport_generator_lp_deposited(
 ) -> Result<Uint256, ContractError> {
     let res: Uint128 = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: generator_contract.to_string(),
-        msg: to_binary(&GeneratorQueryMsg::Deposit {
+        msg: to_json_binary(&GeneratorQueryMsg::Deposit {
             lp_token: lp_contract.to_string(),
             user: user.to_string(),
         })?,

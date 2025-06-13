@@ -1,10 +1,9 @@
 use schemars::JsonSchema;
+use moneymarket::custody::BorrowerResponse;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_bignumber::math::Uint256;
-use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage};
+use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage, Uint256};
 use cosmwasm_storage::{Bucket, ReadonlyBucket, ReadonlySingleton, Singleton};
-use moneymarket::custody::BorrowerResponse;
 
 const KEY_CONFIG: &[u8] = b"config";
 const PREFIX_BORROWER: &[u8] = b"borrower";

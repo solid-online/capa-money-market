@@ -5,7 +5,7 @@ use crate::query::{query_config, query_price, query_prices, query_source_info};
 use crate::state::{Config, CONFIG};
 
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 
 use moneymarket::oracle::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
@@ -51,11 +51,11 @@ pub fn execute(
 #[entry_point]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps).unwrap()),
-        QueryMsg::SourceInfo { asset } => to_binary(&query_source_info(deps, asset).unwrap()),
-        QueryMsg::Price { base, quote } => to_binary(&query_price(deps, env, base, quote).unwrap()),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps).unwrap()),
+        QueryMsg::SourceInfo { asset } => to_json_binary(&query_source_info(deps, asset).unwrap()),
+        QueryMsg::Price { base, quote } => to_json_binary(&query_price(deps, env, base, quote).unwrap()),
         QueryMsg::Prices { start_after, limit } => {
-            to_binary(&query_prices(deps, env, start_after, limit).unwrap())
+            to_json_binary(&query_prices(deps, env, start_after, limit).unwrap())
         }
     }
 }

@@ -1,6 +1,5 @@
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::{
-    attr, to_binary, Addr, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, SubMsg,
+    attr, to_json_binary, Addr, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, SubMsg,Decimal256, Uint256,
     WasmMsg,
 };
 
@@ -37,7 +36,7 @@ pub fn lock_collateral(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: whitelist_elem.custody_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&CustodyExecuteMsg::LockCollateral {
+            msg: to_json_binary(&CustodyExecuteMsg::LockCollateral {
                 borrower: info.sender.to_string(),
                 amount: collateral.1,
             })?,
@@ -84,7 +83,7 @@ pub fn unlock_collateral(
     let borrow_amount_res: BorrowerInfoResponse =
         query_borrower_info(deps.as_ref(), market, borrower.clone())?;
     if borrow_limit < borrow_amount_res.loan_amount {
-        return Err(ContractError::UnlockTooLarge(borrow_limit.into()));
+        return Err(ContractError::UnlockTooLarge(borrow_limit));
     }
 
     store_collaterals(deps.storage, &borrower, &cur_collaterals)?;
@@ -95,7 +94,7 @@ pub fn unlock_collateral(
         messages.push(SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: whitelist_elem.custody_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&CustodyExecuteMsg::UnlockCollateral {
+            msg: to_json_binary(&CustodyExecuteMsg::UnlockCollateral {
                 borrower: borrower.to_string(),
                 amount: collateral.1,
             })?,
@@ -169,7 +168,7 @@ pub fn liquidate_collateral(
             Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: whitelist_elem.custody_contract.to_string(),
                 funds: vec![],
-                msg: to_binary(&CustodyExecuteMsg::LiquidateCollateral {
+                msg: to_json_binary(&CustodyExecuteMsg::LiquidateCollateral {
                     liquidator: info.sender.to_string(),
                     borrower: borrower_validated.to_string(),
                     amount: collateral.1,

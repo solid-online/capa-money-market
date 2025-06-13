@@ -1,7 +1,6 @@
 use std::cmp::min;
 
-use cosmwasm_bignumber::math::Decimal256;
-use cosmwasm_std::{Deps, Env, Order, StdResult};
+use cosmwasm_std::{Deps, Env, Order, StdResult,Decimal256};
 
 use cw_storage_plus::Bound;
 use moneymarket::oracle::{

@@ -1,5 +1,4 @@
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
-use cosmwasm_std::{Addr, Order, StdError, StdResult, Storage, Uint128};
+use cosmwasm_std::{Addr, Order, StdError, StdResult, Storage, Uint128, Decimal256, Uint256};
 use cosmwasm_storage::{singleton, singleton_read, Bucket, ReadonlyBucket};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -195,7 +194,7 @@ pub fn read_or_create_bid_pool(
                     sum_snapshot: Decimal256::zero(),
                     total_bid_amount: Uint256::zero(),
                     premium_rate: collateral_info.premium_rate_per_slot
-                        * Decimal256::from_uint256(Uint256::from(premium_slot as u128)),
+                        * Decimal256::from_ratio(Uint256::from(premium_slot as u128), Uint256::one()),
                     current_epoch: Uint128::zero(),
                     current_scale: Uint128::zero(),
                     residue_collateral: Decimal256::zero(),

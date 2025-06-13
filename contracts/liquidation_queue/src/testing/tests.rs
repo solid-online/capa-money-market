@@ -1,9 +1,11 @@
 use crate::contract::{execute, instantiate, query};
 use crate::testing::mock_querier::mock_dependencies;
 
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{attr, from_binary, to_binary, CosmosMsg, StdError, SubMsg, Uint128, WasmMsg};
+use cosmwasm_std::{
+    attr, from_json, to_json_binary, CosmosMsg, Decimal256, StdError, SubMsg, Uint128, Uint256,
+    WasmMsg,
+};
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
 use moneymarket::liquidation::MarketExecuteMsg;
 use moneymarket::liquidation_queue::{
@@ -35,8 +37,7 @@ fn proper_initialization() {
     assert_eq!(0, res.messages.len());
 
     // it worked, let's query the state
-    let value: ConfigResponse =
-        from_binary(&query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap()).unwrap();
+    let value: ConfigResponse = from_json(&query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap()).unwrap();
     assert_eq!(
         value,
         ConfigResponse {
@@ -110,8 +111,7 @@ fn update_config() {
     assert_eq!(0, res.messages.len());
 
     // it worked, let's query the state
-    let value: ConfigResponse =
-        from_binary(&query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap()).unwrap();
+    let value: ConfigResponse = from_json(&query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap()).unwrap();
     assert_eq!(
         value,
         ConfigResponse {
@@ -146,8 +146,7 @@ fn update_config() {
     assert_eq!(0, res.messages.len());
 
     // it worked, let's query the state
-    let value: ConfigResponse =
-        from_binary(&query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap()).unwrap();
+    let value: ConfigResponse = from_json(&query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap()).unwrap();
     assert_eq!(
         value,
         ConfigResponse {
@@ -216,7 +215,7 @@ fn submit_bid() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(0u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "asset0000".to_string(),
             premium_slot: 1u8,
         })
@@ -232,7 +231,7 @@ fn submit_bid() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "asset0000".to_string(),
             premium_slot: 1u8,
         })
@@ -243,7 +242,7 @@ fn submit_bid() {
     let wait_end = env.block.time.plus_seconds(60u64);
     execute(deps.as_mut(), env, info, msg).unwrap();
 
-    let bid_response: BidResponse = from_binary(
+    let bid_response: BidResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -307,7 +306,7 @@ fn activate_bid() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "asset0000".to_string(),
             premium_slot: 1u8,
         })
@@ -357,7 +356,7 @@ fn activate_bid() {
     );
     assert!(res.messages.is_empty());
 
-    let bid_response: BidResponse = from_binary(
+    let bid_response: BidResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -421,7 +420,7 @@ fn retract_bid() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "asset0000".to_string(),
             premium_slot: 1u8,
         })
@@ -452,7 +451,7 @@ fn retract_bid() {
         vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "stable0000".to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: "addr0000".to_string(),
                 amount: Uint128::from(1000000u128),
             })
@@ -496,7 +495,7 @@ fn retract_unactive_bid() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "asset0000".to_string(),
             premium_slot: 1u8,
         })
@@ -579,7 +578,7 @@ fn execute_bid() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "asset0000".to_string(),
             premium_slot: 1u8,
         })
@@ -605,7 +604,7 @@ fn execute_bid() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0001".to_string(),
         amount: Uint128::from(1000000u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -626,7 +625,7 @@ fn execute_bid() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(), // only custody contract can execute
         amount: Uint128::from(1000000u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator0000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -643,10 +642,10 @@ fn execute_bid() {
             SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "stable0000".to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: "repay0000".to_string(),
                     amount: Uint128::from(485100u128),
-                    msg: to_binary(&MarketExecuteMsg::RepayStableFromLiquidation {
+                    msg: to_json_binary(&MarketExecuteMsg::RepayStableFromLiquidation {
                         borrower: "addr0000".to_string()
                     })
                     .unwrap(),
@@ -656,7 +655,7 @@ fn execute_bid() {
             SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "stable0000".to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                     recipient: "fee0000".to_string(),
                     amount: Uint128::from(4950u128),
                 })
@@ -665,7 +664,7 @@ fn execute_bid() {
             SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "stable0000".to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                     recipient: "liquidator0000".to_string(),
                     amount: Uint128::from(4950u128),
                 })
@@ -677,7 +676,7 @@ fn execute_bid() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(1000000u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator0000".to_string(),
             fee_address: None,
             repay_address: None,
@@ -695,7 +694,7 @@ fn execute_bid() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(2020206u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -753,7 +752,7 @@ fn claim_liquidations() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(1000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "asset0000".to_string(),
             premium_slot: 1u8,
         })
@@ -779,7 +778,7 @@ fn claim_liquidations() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(1000000u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -852,7 +851,7 @@ fn update_collateral_info() {
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
     // query col info
-    let collateral_info_response: CollateralInfoResponse = from_binary(
+    let collateral_info_response: CollateralInfoResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),

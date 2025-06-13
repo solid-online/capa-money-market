@@ -1,6 +1,5 @@
-use cosmwasm_bignumber::math::Decimal256;
 use cosmwasm_std::{
-    attr, Addr, Attribute, Decimal, DepsMut, Empty, Env, MessageInfo, QueryRequest, Response,
+    attr, Addr, Attribute, Decimal256, Decimal, DepsMut, Empty, Env, MessageInfo, QueryRequest, Response,
     StdError,
 };
 use moneymarket::oracle::{

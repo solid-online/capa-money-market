@@ -4,11 +4,10 @@ use crate::response::MsgInstantiateContractResponse;
 use crate::state::{store_state, State};
 use crate::testing::mock_querier::mock_dependencies;
 
-use cosmwasm_bignumber::math::Decimal256;
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    attr, from_binary, to_binary, Coin, CosmosMsg, Reply, SubMsg, SubMsgResponse, SubMsgResult,
-    Uint128, WasmMsg,
+    attr, from_json, to_json_binary, Coin, CosmosMsg, Reply, SubMsg, SubMsgResponse, SubMsgResult,
+    Uint128, WasmMsg, Decimal256,
 };
 use cw20::{Cw20Coin, Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 use moneymarket::native_wrapper::{
@@ -47,7 +46,7 @@ fn proper_initialization() {
                 code_id: 123u64,
                 funds: vec![],
                 label: "IBCstATOM".to_string(),
-                msg: to_binary(&TokenInstantiateMsg {
+                msg: to_json_binary(&TokenInstantiateMsg {
                     name: "wstAtom".to_string(),
                     symbol: "wstAtom".to_string(),
                     decimals: 6u8,
@@ -84,7 +83,7 @@ fn proper_initialization() {
 
     let query_res = query(deps.as_ref(), mock_env(), QueryMsg::State {}).unwrap();
 
-    let state: StateResponse = from_binary(&query_res).unwrap();
+    let state: StateResponse = from_json(&query_res).unwrap();
     assert_eq!(Uint128::zero(), state.total_bond);
     assert_eq!(Uint128::zero(), state.total_supply);
 }
@@ -130,12 +129,12 @@ fn update_config() {
 
     // it worked, let's query the state
     let res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&res).unwrap();
+    let config_res: ConfigResponse = from_json(&res).unwrap();
     assert_eq!("owner1".to_string(), config_res.owner_addr);
 
     // it worked, let's query the state
     let res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&res).unwrap();
+    let config_res: ConfigResponse = from_json(&res).unwrap();
     assert_eq!("owner1".to_string(), config_res.owner_addr);
     assert_eq!("statom".to_string(), config_res.wrapper_contract);
     assert_eq!("wstAtom".to_string(), config_res.wrapper_denom);
@@ -205,7 +204,7 @@ fn bond() {
         vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "statom".to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
+            msg: to_json_binary(&Cw20ExecuteMsg::Mint {
                 recipient: "addr0000".to_string(),
                 amount: Uint128::from(1000000u128),
             })
@@ -223,7 +222,7 @@ fn bond() {
     )]);
 
     assert_eq!(
-        from_binary::<State>(&query(deps.as_ref(), env.clone(), QueryMsg::State {}).unwrap())
+        from_json::<State>(&query(deps.as_ref(), env.clone(), QueryMsg::State {}).unwrap())
             .unwrap(),
         State {
             total_bond: Uint128::from(1000000u128),
@@ -252,7 +251,7 @@ fn bond() {
         vec![SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "statom".to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
+            msg: to_json_binary(&Cw20ExecuteMsg::Mint {
                 recipient: "addr0001".to_string(),
                 amount: Uint128::from(1000000u128),
             })
@@ -314,7 +313,7 @@ fn unbound() {
         id: 1,
         result: SubMsgResult::Ok(SubMsgResponse {
             events: vec![],
-            data: Some(token_inst_res.write_to_bytes().unwrap().into()),
+            data: Some(token_inst_res.write_to_bytes().unwrap().into()),    
         }),
     };
     let _res = reply(deps.as_mut(), mock_env(), reply_msg).unwrap();
@@ -348,7 +347,7 @@ fn unbound() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0001".to_string(),
         amount: Uint128::from(INITIAL_DEPOSIT_AMOUNT),
-        msg: to_binary(&Cw20HookMsg::Unbound { recipient: None }).unwrap(),
+        msg: to_json_binary(&Cw20HookMsg::Unbound { recipient: None }).unwrap(),
     });
 
     let res = execute(deps.as_mut(), env.clone(), info, msg);
@@ -362,7 +361,7 @@ fn unbound() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(0u128),
-        msg: to_binary(&Cw20HookMsg::Unbound { recipient: None }).unwrap(),
+        msg: to_json_binary(&Cw20HookMsg::Unbound { recipient: None }).unwrap(),
     });
 
     let _st_atom = "wstAtom";
@@ -375,7 +374,7 @@ fn unbound() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0001".to_string(),
         amount: Uint128::from(100000u128),
-        msg: to_binary(&Cw20HookMsg::Unbound { recipient: None }).unwrap(),
+        msg: to_json_binary(&Cw20HookMsg::Unbound { recipient: None }).unwrap(),
     });
 
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
@@ -392,7 +391,7 @@ fn unbound() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0001".to_string(),
         amount: Uint128::from(100000u128),
-        msg: to_binary(&Cw20HookMsg::Unbound {
+        msg: to_json_binary(&Cw20HookMsg::Unbound {
             recipient: Some("addr0002".to_string()),
         })
         .unwrap(),

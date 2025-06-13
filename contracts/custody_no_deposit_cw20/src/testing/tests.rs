@@ -1,5 +1,4 @@
-use cosmwasm_bignumber::math::Uint256;
-use cosmwasm_std::{from_binary, to_binary, Uint128};
+use cosmwasm_std::{from_json, to_json_binary, Uint128, Uint256};
 
 use crate::contract::{execute, instantiate, query};
 use crate::error::ContractError;
@@ -30,7 +29,7 @@ fn proper_initialization() {
     let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
     let query_res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&query_res).unwrap();
+    let config_res: ConfigResponse = from_json(&query_res).unwrap();
     assert_eq!("owner".to_string(), config_res.owner);
     assert_eq!("lunax".to_string(), config_res.collateral_token);
     assert_eq!("overseer".to_string(), config_res.overseer_contract);
@@ -65,7 +64,7 @@ fn update_config() {
     execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap();
 
     let query_res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&query_res).unwrap();
+    let config_res: ConfigResponse = from_json(&query_res).unwrap();
     assert_eq!("owner2".to_string(), config_res.owner);
     assert_eq!("lunax".to_string(), config_res.collateral_token);
     assert_eq!("overseer".to_string(), config_res.overseer_contract);
@@ -100,7 +99,7 @@ fn deposit_collateral() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::DepositCollateral {}).unwrap(),
+        msg: to_json_binary(&Cw20HookMsg::DepositCollateral {}).unwrap(),
     });
 
     // failed; cannot directly execute receive message
@@ -115,7 +114,7 @@ fn deposit_collateral() {
     let msg2 = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "addr0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary("invalid").unwrap(),
+        msg: to_json_binary("invalid").unwrap(),
     });
     let res2 = execute(deps.as_mut(), mock_env(), info, msg2);
     match res2 {
@@ -135,7 +134,7 @@ fn deposit_collateral() {
     )
     .unwrap();
 
-    let borrower_res: BorrowerResponse = from_binary(&query_res).unwrap();
+    let borrower_res: BorrowerResponse = from_json(&query_res).unwrap();
     assert_eq!(
         borrower_res,
         BorrowerResponse {
@@ -157,7 +156,7 @@ fn deposit_collateral() {
         },
     )
     .unwrap();
-    let borrower_res: BorrowerResponse = from_binary(&query_res).unwrap();
+    let borrower_res: BorrowerResponse = from_json(&query_res).unwrap();
     assert_eq!(
         borrower_res,
         BorrowerResponse {

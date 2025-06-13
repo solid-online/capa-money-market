@@ -1,8 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
-use cosmwasm_std::Uint128;
+use cosmwasm_std::{Decimal256, Uint128, Uint256};
 use cw20::Cw20ReceiveMsg;
 
 use crate::tokens::TokensHuman;

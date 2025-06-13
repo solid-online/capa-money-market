@@ -1,13 +1,13 @@
-use crate::contract::{execute, instantiate, query};
+use crate::contract::{execute, instantiate};
+use crate::contract::query;
 use crate::testing::mock_querier::mock_dependencies;
 
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::{attr, from_binary, to_binary, StdError, Uint128};
+use cosmwasm_std::{attr, to_json_binary, Decimal256, StdError, Uint128, Uint256,from_json};
 use cw20::Cw20ReceiveMsg;
-use moneymarket::liquidation_queue::{
-    BidPoolResponse, BidResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg,
-};
+use moneymarket::liquidation_queue::{Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
+use moneymarket::liquidation_queue::{BidPoolResponse, BidResponse};
+
 
 #[test]
 fn one_bidder_distribution() {
@@ -54,7 +54,7 @@ fn one_bidder_distribution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 1u8,
         })
@@ -78,7 +78,7 @@ fn one_bidder_distribution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(2u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -165,7 +165,7 @@ fn two_bidder_distribution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 0u8,
         })
@@ -189,7 +189,7 @@ fn two_bidder_distribution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(4u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -204,7 +204,7 @@ fn two_bidder_distribution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(60u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 0u8,
         })
@@ -237,7 +237,7 @@ fn two_bidder_distribution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(6u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -341,7 +341,7 @@ fn two_bidder_distribution_big_numbers() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(10000000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 0u8,
         })
@@ -365,7 +365,7 @@ fn two_bidder_distribution_big_numbers() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(400u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -380,7 +380,7 @@ fn two_bidder_distribution_big_numbers() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(6000000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 0u8,
         })
@@ -414,7 +414,7 @@ fn two_bidder_distribution_big_numbers() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(600u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -519,7 +519,7 @@ fn one_user_two_bid_slots() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(100000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 5u8,
         })
@@ -534,7 +534,7 @@ fn one_user_two_bid_slots() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(100000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 10u8,
         })
@@ -556,7 +556,7 @@ fn one_user_two_bid_slots() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(5000000u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -587,7 +587,7 @@ fn one_user_two_bid_slots() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(10000000u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -681,7 +681,7 @@ fn partial_withdraw_after_execution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(1000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 0u8,
         })
@@ -705,7 +705,7 @@ fn partial_withdraw_after_execution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(10u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -728,7 +728,7 @@ fn partial_withdraw_after_execution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(250u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 0u8,
         })
@@ -749,7 +749,7 @@ fn partial_withdraw_after_execution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(4u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -878,7 +878,7 @@ fn completely_empty_pool() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(1000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 0u8,
         })
@@ -891,7 +891,7 @@ fn completely_empty_pool() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(20u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -906,7 +906,7 @@ fn completely_empty_pool() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(2000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 0u8,
         })
@@ -914,7 +914,7 @@ fn completely_empty_pool() {
     });
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-    let bid_response: BidResponse = from_binary(
+    let bid_response: BidResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -928,7 +928,7 @@ fn completely_empty_pool() {
     assert!(!bid_response.product_snapshot.is_zero(),);
     assert!(bid_response.epoch_snapshot == Uint128::from(1u128)); // epoch increased
 
-    let bid_pool: BidPoolResponse = from_binary(
+    let bid_pool: BidPoolResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -958,7 +958,7 @@ fn completely_empty_pool() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(20u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -1054,7 +1054,7 @@ fn product_truncated_to_zero() {
         let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
             sender: "alice0000".to_string(),
             amount: Uint128::from(1000000000u128),
-            msg: to_binary(&Cw20HookMsg::SubmitBid {
+            msg: to_json_binary(&Cw20HookMsg::SubmitBid {
                 collateral_token: "col0000".to_string(),
                 premium_slot: 0u8,
             })
@@ -1067,7 +1067,7 @@ fn product_truncated_to_zero() {
         let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
             sender: "custody0000".to_string(),
             amount: Uint128::from(999999995u128), // 5 uusd residue
-            msg: to_binary(&Cw20HookMsg::ExecuteBid {
+            msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
                 liquidator: "liquidator00000".to_string(),
                 fee_address: Some("fee0000".to_string()),
                 repay_address: Some("repay0000".to_string()),
@@ -1094,7 +1094,7 @@ fn product_truncated_to_zero() {
         ]
     );
 
-    let bid_pool: BidPoolResponse = from_binary(
+    let bid_pool: BidPoolResponse = from_json(
         &query(
             deps.as_ref(),
             mock_env(),
@@ -1171,7 +1171,7 @@ fn two_bidder_reward_distribution_common_slot() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 5u8,
         })
@@ -1195,7 +1195,7 @@ fn two_bidder_reward_distribution_common_slot() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 5u8,
         })
@@ -1221,7 +1221,7 @@ fn two_bidder_reward_distribution_common_slot() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(10u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -1343,7 +1343,7 @@ fn two_bidder_distribution_multiple_common_slots() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 5u8,
         })
@@ -1367,7 +1367,7 @@ fn two_bidder_distribution_multiple_common_slots() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 5u8,
         })
@@ -1390,7 +1390,7 @@ fn two_bidder_distribution_multiple_common_slots() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(200u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 10u8,
         })
@@ -1415,7 +1415,7 @@ fn two_bidder_distribution_multiple_common_slots() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(200u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 10u8,
         })
@@ -1442,7 +1442,7 @@ fn two_bidder_distribution_multiple_common_slots() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(10u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -1458,7 +1458,7 @@ fn two_bidder_distribution_multiple_common_slots() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(22u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -1648,7 +1648,7 @@ fn two_bidder_unequal_deposit_reward_distribution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(150u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 2u8,
         })
@@ -1672,7 +1672,7 @@ fn two_bidder_unequal_deposit_reward_distribution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(200u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 2u8,
         })
@@ -1698,7 +1698,7 @@ fn two_bidder_unequal_deposit_reward_distribution() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(51u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -1827,7 +1827,7 @@ fn scalable_reward_distribution_after_multiple_liquidations() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(50u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 10u8,
         })
@@ -1851,7 +1851,7 @@ fn scalable_reward_distribution_after_multiple_liquidations() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 10u8,
         })
@@ -1874,7 +1874,7 @@ fn scalable_reward_distribution_after_multiple_liquidations() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "john0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 10u8,
         })
@@ -1904,7 +1904,7 @@ fn scalable_reward_distribution_after_multiple_liquidations() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -1923,7 +1923,7 @@ fn scalable_reward_distribution_after_multiple_liquidations() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(250u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 10u8,
         })
@@ -1947,7 +1947,7 @@ fn scalable_reward_distribution_after_multiple_liquidations() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "john0000".to_string(),
         amount: Uint128::from(250u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 10u8,
         })
@@ -1974,7 +1974,7 @@ fn scalable_reward_distribution_after_multiple_liquidations() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(50u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -2069,7 +2069,7 @@ fn not_enough_bid_for_collateral() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 6u8,
         })
@@ -2093,7 +2093,7 @@ fn not_enough_bid_for_collateral() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 6u8,
         })
@@ -2118,7 +2118,7 @@ fn not_enough_bid_for_collateral() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),
@@ -2181,7 +2181,7 @@ fn two_bidder_reward_distribution_common_slot_large_numbers() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "alice0000".to_string(),
         amount: Uint128::from(1000000000000000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 5u8,
         })
@@ -2205,7 +2205,7 @@ fn two_bidder_reward_distribution_common_slot_large_numbers() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "bob0000".to_string(),
         amount: Uint128::from(1000000000000000000u128),
-        msg: to_binary(&Cw20HookMsg::SubmitBid {
+        msg: to_json_binary(&Cw20HookMsg::SubmitBid {
             collateral_token: "col0000".to_string(),
             premium_slot: 5u8,
         })
@@ -2231,7 +2231,7 @@ fn two_bidder_reward_distribution_common_slot_large_numbers() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: "custody0000".to_string(),
         amount: Uint128::from(1000000000u128),
-        msg: to_binary(&Cw20HookMsg::ExecuteBid {
+        msg: to_json_binary(&Cw20HookMsg::ExecuteBid {
             liquidator: "liquidator00000".to_string(),
             fee_address: Some("fee0000".to_string()),
             repay_address: Some("repay0000".to_string()),

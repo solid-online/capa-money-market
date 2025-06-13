@@ -1,14 +1,13 @@
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, from_slice, to_binary, Addr, Api, BalanceResponse, BankQuery, CanonicalAddr, Coin,
-    ContractResult, OwnedDeps, Querier, QuerierResult, QueryRequest, SystemError, SystemResult,
+    from_json, to_json_binary, Addr, Api, BalanceResponse, BankQuery, CanonicalAddr, Coin, ContractResult, OwnedDeps, Querier, QuerierResult, QueryRequest, SystemError, SystemResult,
     Uint128, WasmQuery,
 };
 use cosmwasm_storage::to_length_prefixed;
 use cw20::{Cw20QueryMsg, TokenInfoResponse};
 use std::collections::HashMap;
 use std::marker::PhantomData;
-use terra_cosmwasm::TerraQueryWrapper;
+use cosmwasm_std::Empty;
 
 pub fn mock_dependencies(
     contract_balance: &[Coin],
@@ -25,7 +24,7 @@ pub fn mock_dependencies(
 }
 
 pub struct WasmMockQuerier {
-    base: MockQuerier<TerraQueryWrapper>,
+    base: MockQuerier,
     token_querier: TokenQuerier,
     cw20_balance: Uint128,
     uluna_balance: Uint128,
@@ -40,7 +39,7 @@ pub struct TokenQuerier {
 impl Querier for WasmMockQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         // MockQuerier doesn't support Custom, so we ignore it completely here
-        let request: QueryRequest<TerraQueryWrapper> = match from_slice(bin_request) {
+        let request: QueryRequest<Empty> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
@@ -54,7 +53,7 @@ impl Querier for WasmMockQuerier {
 }
 
 impl WasmMockQuerier {
-    pub fn handle_query(&self, request: &QueryRequest<TerraQueryWrapper>) -> QuerierResult {
+    pub fn handle_query(&self, request: &QueryRequest<Empty> ) -> QuerierResult {
         match &request {
             QueryRequest::Wasm(WasmQuery::Raw { contract_addr, key }) => {
                 let key: &[u8] = key.as_slice();
@@ -63,7 +62,7 @@ impl WasmMockQuerier {
                 let prefix_balance = to_length_prefixed(b"balance").to_vec();
 
                 let balances: &HashMap<String, Uint128> =
-                    match self.token_querier.balances.get(contract_addr) {
+                    match self.token_querier.balances.get(&contract_addr.to_string()) {
                         Some(balances) => balances,
                         None => {
                             return SystemResult::Err(SystemError::InvalidRequest {
@@ -83,8 +82,8 @@ impl WasmMockQuerier {
                         total_supply += *balance.1;
                     }
 
-                    SystemResult::Ok(ContractResult::from(to_binary(
-                        &to_binary(&TokenInfoResponse {
+                    SystemResult::Ok(ContractResult::from(to_json_binary(
+                        &to_json_binary(&TokenInfoResponse {
                             name: "mAPPL".to_string(),
                             symbol: "mAPPL".to_string(),
                             decimals: 6,
@@ -114,8 +113,8 @@ impl WasmMockQuerier {
                             })
                         }
                     };
-                    SystemResult::Ok(ContractResult::from(to_binary(
-                        &to_binary(&balance).unwrap(),
+                    SystemResult::Ok(ContractResult::from(to_json_binary(
+                        &to_json_binary(&balance).unwrap(),
                     )))
                 } else {
                     panic!("DO NOT ENTER HERE")
@@ -125,37 +124,37 @@ impl WasmMockQuerier {
             QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: _,
                 msg,
-            }) => match from_binary(msg).unwrap() {
+            }) => match from_json(msg).unwrap() {
                 Cw20QueryMsg::Balance { address: _ } => {
-                    SystemResult::Ok(ContractResult::from(to_binary(&cw20::BalanceResponse {
+                    SystemResult::Ok(ContractResult::from(to_json_binary(&cw20::BalanceResponse {
                         balance: self.cw20_balance,
                     })))
                 }
                 Cw20QueryMsg::TokenInfo {} => {
-                    SystemResult::Ok(ContractResult::from(to_binary("not implemented")))
+                    SystemResult::Ok(ContractResult::from(to_json_binary("not implemented")))
                 }
                 Cw20QueryMsg::Allowance {
                     owner: _,
                     spender: _,
-                } => SystemResult::Ok(ContractResult::from(to_binary("not implemented"))),
+                } => SystemResult::Ok(ContractResult::from(to_json_binary("not implemented"))),
                 Cw20QueryMsg::Minter {} => {
-                    SystemResult::Ok(ContractResult::from(to_binary("not implemented")))
+                    SystemResult::Ok(ContractResult::from(to_json_binary("not implemented")))
                 }
                 Cw20QueryMsg::MarketingInfo {} => {
-                    SystemResult::Ok(ContractResult::from(to_binary("not implemented")))
+                    SystemResult::Ok(ContractResult::from(to_json_binary("not implemented")))
                 }
                 Cw20QueryMsg::DownloadLogo {} => {
-                    SystemResult::Ok(ContractResult::from(to_binary("not implemented")))
+                    SystemResult::Ok(ContractResult::from(to_json_binary("not implemented")))
                 }
                 Cw20QueryMsg::AllAllowances {
                     owner: _,
                     start_after: _,
                     limit: _,
-                } => SystemResult::Ok(ContractResult::from(to_binary("not implemented"))),
+                } => SystemResult::Ok(ContractResult::from(to_json_binary("not implemented"))),
                 Cw20QueryMsg::AllAccounts {
                     start_after: _,
                     limit: _,
-                } => SystemResult::Ok(ContractResult::from(to_binary("not implemented"))),
+                } => SystemResult::Ok(ContractResult::from(to_json_binary("not implemented"))),
             },
 
             QueryRequest::Bank(BankQuery::Balance { address: _, denom }) => {
@@ -165,7 +164,7 @@ impl WasmMockQuerier {
                         amount: self.uluna_balance,
                     },
                 };
-                SystemResult::Ok(ContractResult::from(to_binary(&bank_res)))
+                SystemResult::Ok(ContractResult::from(to_json_binary(&bank_res)))
             }
             _ => self.base.handle_query(request),
         }
@@ -173,7 +172,7 @@ impl WasmMockQuerier {
 }
 
 impl WasmMockQuerier {
-    pub fn new(base: MockQuerier<TerraQueryWrapper>) -> Self {
+    pub fn new(base: MockQuerier) -> Self {
         WasmMockQuerier {
             base,
             token_querier: TokenQuerier::default(),

@@ -1,14 +1,14 @@
-use std::ops::{Div, Mul};
-
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::{
-    attr, to_binary, Addr, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
+    attr, to_json_binary, Addr, CosmosMsg, Decimal256, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, Uint256, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
 use moneymarket::market::{BorrowerInfoResponse, BorrowerInfosResponse};
 use moneymarket::oracle::PriceResponse;
 use moneymarket::overseer::BorrowLimitResponse;
 use moneymarket::querier::{query_price, TimeConstraints};
+use std::convert::TryInto;
+use std::ops::{Div};
 
 use crate::error::ContractError;
 use crate::querier::query_borrow_limit;
@@ -44,14 +44,14 @@ pub fn borrow_stable(
     // if borrow limit is greater then the total debt plus the new one with the one time fee return error
     if borrow_limit_res.borrow_limit < borrow_amount_with_fee + liability.loan_amount {
         return Err(ContractError::BorrowExceedsLimit(
-            borrow_limit_res.borrow_limit.into(),
+            borrow_limit_res.borrow_limit,
         ));
     }
 
     liability.loan_amount += borrow_amount_with_fee;
     liability.loan_amount_without_interest += borrow_amount;
 
-    state.total_liabilities += Decimal256::from_uint256(borrow_amount);
+    state.total_liabilities += Decimal256::from_ratio(borrow_amount, Uint256::one());
     store_state(deps.storage, &state)?;
     store_borrower_info(deps.storage, &borrower, &liability)?;
 
@@ -60,9 +60,9 @@ pub fn borrow_stable(
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.stable_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
+            msg: to_json_binary(&Cw20ExecuteMsg::Mint {
                 recipient: to.unwrap_or_else(|| borrower.clone()).to_string(),
-                amount: borrow_amount.into(),
+                amount: borrow_amount.try_into().unwrap(),
             })?,
         }))
         .add_attributes(vec![
@@ -107,16 +107,20 @@ pub fn repay_stable(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.stable_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: borrower.to_string(),
-                amount: (amount - repay_amount).into(),
+                amount: (amount - repay_amount).try_into().unwrap(),
             })?,
         }));
     } else {
         repay_amount = amount;
-        burn_amount = repay_amount
-            .mul(liability.loan_amount_without_interest)
-            .div(Decimal256::from_uint256(liability.loan_amount));
+        let loan_amount_decimal = Decimal256::from_ratio(liability.loan_amount, Uint256::one());
+        let burn_ratio =
+            Decimal256::from_ratio(liability.loan_amount_without_interest, Uint256::one())
+                / loan_amount_decimal;
+
+        burn_amount =
+            repay_amount.multiply_ratio(burn_ratio.atomics(), Decimal256::one().atomics());
         liability.loan_amount = liability.loan_amount - repay_amount;
         liability.loan_amount_without_interest =
             liability.loan_amount_without_interest - burn_amount;
@@ -126,8 +130,8 @@ pub fn repay_stable(
     messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: config.stable_contract.to_string(),
         funds: vec![],
-        msg: to_binary(&Cw20ExecuteMsg::Burn {
-            amount: burn_amount.into(),
+        msg: to_json_binary(&Cw20ExecuteMsg::Burn {
+            amount: burn_amount.try_into().unwrap(),
         })?,
     }));
 
@@ -138,13 +142,14 @@ pub fn repay_stable(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.stable_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: config.collector_contract.to_string(),
-                amount: interest_amount.into(),
+                amount: interest_amount.try_into().unwrap(),
             })?,
         }));
     }
-    state.total_liabilities = state.total_liabilities - Decimal256::from_uint256(burn_amount);
+    state.total_liabilities =
+        state.total_liabilities - Decimal256::from_ratio(burn_amount, Uint256::one());
     store_borrower_info(deps.storage, &borrower_validated, &liability)?;
     store_state(deps.storage, &state)?;
 

@@ -10,19 +10,15 @@ homepage = "https://astroport.fi"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[features]
-# for quicker tests, cargo test --lib
-# for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cw20 = { version = "0.13" }
-cosmwasm-std = { version = "1.0", features = ["iterator"] }
-schemars = "0.8"
-serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-uint = "0.9"
-cw-storage-plus = {version = "0.13", features = ['iterator']}
-itertools = "0.10"
+cw20 = { workspace = true }
+cosmwasm-std = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
+uint = { workspace = true }
+cw-storage-plus = { workspace = true }
+itertools = { workspace = true }
 
 [dev-dependencies]
-cosmwasm-schema = "1.0"
+cosmwasm-schema = "1.5.11"

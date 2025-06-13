@@ -5,11 +5,9 @@ use crate::state::{
     read_epoch_scale_sum, read_or_create_bid_pool, read_total_bids, remove_bid, store_bid,
     store_bid_pool, store_epoch_scale_sum, store_total_bids, Bid, BidPool, CollateralInfo, Config,
 };
-use bigint::U256;
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::{
-    attr, to_binary, CanonicalAddr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdError,
-    StdResult, Storage, Uint128, WasmMsg,
+    attr, to_json_binary, CanonicalAddr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdError,
+    StdResult, Storage, Uint128, WasmMsg, Uint256, Decimal256,
 };
 use cw20::Cw20ExecuteMsg;
 
@@ -253,7 +251,7 @@ pub fn retract_bid(
                 .addr_humanize(&config.stable_contract.into())?
                 .to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: info.sender.to_string(),
                 amount: withdraw_amount.into(),
             })?,
@@ -367,7 +365,7 @@ pub fn execute_liquidation(
     let mut messages: Vec<CosmosMsg> = vec![CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: deps.api.addr_humanize(&config.stable_contract)?.to_string(),
         funds: vec![],
-        msg: to_binary(&Cw20ExecuteMsg::Transfer {
+        msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
             recipient: repay_address,
             amount: repay_amount.into(),
         })?,
@@ -377,7 +375,7 @@ pub fn execute_liquidation(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: deps.api.addr_humanize(&config.stable_contract)?.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: fee_address,
                 amount: bid_fee.into(),
             })?,
@@ -388,7 +386,7 @@ pub fn execute_liquidation(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: deps.api.addr_humanize(&config.stable_contract)?.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: liquidator,
                 amount: liquidator_fee.into(),
             })?,
@@ -491,7 +489,7 @@ pub fn claim_liquidations(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: collateral_token.clone(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: info.sender.to_string(),
                 amount: claim_amount.into(),
             })?,

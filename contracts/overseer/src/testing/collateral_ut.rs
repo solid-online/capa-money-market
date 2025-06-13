@@ -1,10 +1,8 @@
 use crate::collateral::compute_borrow_limit;
 use crate::contract::{execute, instantiate};
 use crate::testing::mock_querier::mock_dependencies;
-
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::testing::{mock_env, mock_info};
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Decimal256, Uint256};
 
 use moneymarket::overseer::{ExecuteMsg, InstantiateMsg};
 use moneymarket::tokens::{Token, Tokens};
@@ -12,8 +10,8 @@ use moneymarket::tokens::{Token, Tokens};
 #[test]
 fn proper_compute_borrow_limit() {
     let mut deps = mock_dependencies(&[]);
-
     let info = mock_info("owner", &[]);
+
     let env = mock_env();
     let msg = InstantiateMsg {
         owner_addr: "owner".to_string(),
@@ -53,7 +51,7 @@ fn proper_compute_borrow_limit() {
         (
             &("bluna".to_string(), "uusd".to_string()),
             &(
-                Decimal256::from_uint256(1000u128),
+                Decimal256::from_ratio(1000u128, Uint256::one()),
                 env.block.time.seconds(),
                 env.block.time.seconds(),
             ),
@@ -61,7 +59,7 @@ fn proper_compute_borrow_limit() {
         (
             &("batom".to_string(), "uusd".to_string()),
             &(
-                Decimal256::from_uint256(2000u128),
+                Decimal256::from_ratio(2000u128, Uint256::one()),
                 env.block.time.seconds(),
                 env.block.time.seconds(),
             ),
@@ -76,8 +74,8 @@ fn proper_compute_borrow_limit() {
 
     let res = compute_borrow_limit(deps.as_ref(), &collaterals, None).unwrap();
     let vec: Vec<Decimal256> = vec![
-        Decimal256::from_uint256(1000u128),
-        Decimal256::from_uint256(2000u128),
+        Decimal256::from_ratio(1000u128, Uint256::one()),
+        Decimal256::from_ratio(2000u128, Uint256::one()),
     ];
 
     let res2 = (Uint256::from(1800000u128), vec);

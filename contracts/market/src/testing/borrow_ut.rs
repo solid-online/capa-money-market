@@ -3,9 +3,8 @@ use std::str::FromStr;
 use crate::borrow::compute_borrow_fee;
 use crate::state::{BorrowerInfo, Config};
 use crate::testing::mock_querier::mock_dependencies;
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{Addr, Coin, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal256, Uint128, Uint256};
 
 #[test]
 fn proper_compute_borrower_interest() {

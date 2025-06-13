@@ -1,5 +1,4 @@
-use cosmwasm_bignumber::math::Decimal256;
-use cosmwasm_std::{to_binary, Addr, Deps, QueryRequest, StdResult, WasmQuery};
+use cosmwasm_std::{to_json_binary, Addr, Deps, QueryRequest, StdResult, WasmQuery , Decimal256};
 
 use moneymarket::interest_model::{BorrowRateResponse, QueryMsg as InterestQueryMsg};
 use moneymarket::overseer::{BorrowLimitResponse, QueryMsg as OverseerQueryMsg};
@@ -12,7 +11,7 @@ pub fn query_borrow_rate(
     let borrow_rate: BorrowRateResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: interest_addr.to_string(),
-            msg: to_binary(&InterestQueryMsg::BorrowRate { actual_peg })?,
+            msg: to_json_binary(&InterestQueryMsg::BorrowRate { actual_peg })?,
         }))?;
 
     Ok(borrow_rate)
@@ -27,7 +26,7 @@ pub fn query_borrow_limit(
     let borrow_limit: BorrowLimitResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: overseer_addr.to_string(),
-            msg: to_binary(&OverseerQueryMsg::BorrowLimit {
+            msg: to_json_binary(&OverseerQueryMsg::BorrowLimit {
                 borrower: borrower.to_string(),
                 block_time,
             })?,

@@ -1,9 +1,7 @@
-use cosmwasm_bignumber::math::Uint256;
-#[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult,
+    attr, from_json, to_json_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, Uint256,
 };
 
 use crate::collateral::{
@@ -21,7 +19,7 @@ use moneymarket::custody::{
     ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
 };
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
@@ -47,7 +45,7 @@ pub fn instantiate(
     Ok(Response::default())
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn execute(
     deps: DepsMut,
     _env: Env,
@@ -98,7 +96,7 @@ pub fn receive_cw20(
 ) -> Result<Response, ContractError> {
     let contract_addr = info.sender;
 
-    match from_binary(&cw20_msg.msg) {
+    match from_json(&cw20_msg.msg) {
         Ok(Cw20HookMsg::DepositCollateral {}) => {
             // only asset contract can execute this message
             let config: Config = read_config(deps.storage)?;
@@ -142,15 +140,15 @@ pub fn update_config(
     Ok(Response::new().add_attributes(vec![attr("action", "update_config")]))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         QueryMsg::Borrower { address } => {
             let addr = deps.api.addr_validate(&address)?;
-            to_binary(&query_borrower(deps, addr)?)
+            to_json_binary(&query_borrower(deps, addr)?)
         }
-        QueryMsg::Borrowers { start_after, limit } => to_binary(&query_borrowers(
+        QueryMsg::Borrowers { start_after, limit } => to_json_binary(&query_borrowers(
             deps,
             optional_addr_validate(deps.api, start_after)?,
             limit,
@@ -170,7 +168,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default())
 }

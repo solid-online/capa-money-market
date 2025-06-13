@@ -1,4 +1,4 @@
-#[cfg(not(feature = "library"))]
+
 use cosmwasm_std::entry_point;
 
 use crate::bond::{bond, unbound};
@@ -7,7 +7,7 @@ use crate::response::MsgInstantiateContractResponse;
 use crate::state::{read_config, read_state, store_config, store_state, Config, State};
 
 use cosmwasm_std::{
-    attr, from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Reply,
+    attr, from_json, to_json_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Reply,
     Response, StdError, StdResult, SubMsg, Uint128, WasmMsg,
 };
 use cw20::{Cw20Coin, Cw20ReceiveMsg, MinterResponse};
@@ -19,7 +19,7 @@ use moneymarket::native_wrapper::{
 use moneymarket::terraswap::InstantiateMsg as TokenInstantiateMsg;
 use protobuf::Message;
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -54,7 +54,7 @@ pub fn instantiate(
                 label: msg.collateral_denom,
 
                 // TODO check symbol
-                msg: to_binary(&TokenInstantiateMsg {
+                msg: to_json_binary(&TokenInstantiateMsg {
                     name: msg.wrapper_denom.clone(),
                     symbol: msg.wrapper_denom,
                     decimals: 6u8,
@@ -73,7 +73,7 @@ pub fn instantiate(
     )
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn execute(
     deps: DepsMut,
     _env: Env,
@@ -94,7 +94,7 @@ pub fn execute(
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg.id {
         1 => {
@@ -122,7 +122,7 @@ pub fn receive_cw20(
     cw20_msg: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
     let contract_addr = info.sender;
-    match from_binary(&cw20_msg.msg) {
+    match from_json(&cw20_msg.msg) {
         Ok(Cw20HookMsg::Unbound { recipient }) => {
             let config: Config = read_config(deps.storage)?;
             if contract_addr != config.wrapper_contract {
@@ -170,11 +170,11 @@ pub fn update_config(
     Ok(Response::new().add_attributes(vec![attr("action", "update_config")]))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::State {} => to_binary(&query_state(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::State {} => to_json_binary(&query_state(deps)?),
     }
 }
 
@@ -198,7 +198,7 @@ pub fn query_state(deps: Deps) -> StdResult<StateResponse> {
     })
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default())
 }

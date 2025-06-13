@@ -11,17 +11,10 @@ documentation = "https://docs.terra.money"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[features]
-# for quicker tests, cargo test --lib
-# for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
-
 [dependencies]
-cw20 = { version = "0.13" } 
-cosmwasm-bignumber = { path = "../bignumber"}
-cosmwasm-std = "1.0.0"
-cosmwasm-storage = { version = "1.0.0" }
-terra-cosmwasm = { path = "../terra-cosmwasm"}
-schemars = "0.8.8"
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+cw20 = { workspace = true }
+cosmwasm-std = { workspace = true }
+cosmwasm-storage = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
 

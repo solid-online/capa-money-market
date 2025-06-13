@@ -1,7 +1,6 @@
-#[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    attr, to_json_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,Decimal256,
 };
 
 use crate::collateral::{
@@ -15,7 +14,6 @@ use crate::state::{
     WhitelistElem,
 };
 
-use cosmwasm_bignumber::math::Decimal256;
 use moneymarket::common::optional_addr_validate;
 use moneymarket::overseer::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, WhitelistResponse,
@@ -24,7 +22,7 @@ use moneymarket::overseer::{
 
 pub const BLOCKS_PER_YEAR: u128 = 4656810;
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
@@ -47,12 +45,12 @@ pub fn instantiate(
     Ok(Response::default())
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default())
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -174,7 +172,7 @@ pub fn register_whitelist(
         return Err(ContractError::TokenAlreadyRegistered {});
     }
 
-    if max_ltv <= Decimal256::zero() || max_ltv >= Decimal256::from_ratio(100, 1) {
+    if max_ltv <= Decimal256::zero() || max_ltv >= Decimal256::from_ratio(100u64, 1u64) {
         return Err(ContractError::InvalidMaxLtv {});
     }
     store_whitelist_elem(
@@ -219,7 +217,7 @@ pub fn update_whitelist(
     }
 
     if let Some(max_ltv) = max_ltv {
-        if max_ltv <= Decimal256::zero() || max_ltv >= Decimal256::from_ratio(100, 1) {
+        if max_ltv <= Decimal256::zero() || max_ltv >= Decimal256::from_ratio(100u64, 1u64) {
             return Err(ContractError::InvalidMaxLtv {});
         }
 
@@ -236,25 +234,25 @@ pub fn update_whitelist(
     ]))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         QueryMsg::Whitelist {
             collateral_token,
             start_after,
             limit,
-        } => to_binary(&query_whitelist(
+        } => to_json_binary(&query_whitelist(
             deps,
             optional_addr_validate(deps.api, collateral_token)?,
             optional_addr_validate(deps.api, start_after)?,
             limit,
         )?),
-        QueryMsg::Collaterals { borrower } => to_binary(&query_collaterals(
+        QueryMsg::Collaterals { borrower } => to_json_binary(&query_collaterals(
             deps,
             deps.api.addr_validate(&borrower)?,
         )?),
-        QueryMsg::AllCollaterals { start_after, limit } => to_binary(&query_all_collaterals(
+        QueryMsg::AllCollaterals { start_after, limit } => to_json_binary(&query_all_collaterals(
             deps,
             optional_addr_validate(deps.api, start_after)?,
             limit,
@@ -262,7 +260,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::BorrowLimit {
             borrower,
             block_time,
-        } => to_binary(&query_borrow_limit(
+        } => to_json_binary(&query_borrow_limit(
             deps,
             deps.api.addr_validate(&borrower)?,
             block_time,

@@ -1,7 +1,7 @@
 use crate::asset::{Asset, AssetInfo};
 use crate::factory::PairType;
 use crate::restricted_vector::RestrictedVector;
-use cosmwasm_std::{to_binary, Addr, Decimal, Env, StdResult, SubMsg, Uint128, Uint64, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, Decimal, Env, StdResult, SubMsg, Uint128, Uint64, WasmMsg};
 use cw20::Cw20ReceiveMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -218,7 +218,7 @@ impl ExecuteOnReply {
     pub fn into_submsg(self, env: &Env) -> StdResult<SubMsg> {
         let msg = SubMsg::new(WasmMsg::Execute {
             contract_addr: env.contract.address.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback { action: self })?,
+            msg: to_json_binary(&ExecuteMsg::Callback { action: self })?,
             funds: vec![],
         });
 

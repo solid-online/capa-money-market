@@ -1,5 +1,4 @@
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
-use cosmwasm_std::{to_binary, Addr, Deps, QueryRequest, StdResult, WasmQuery};
+use cosmwasm_std::{to_json_binary, Addr, Deps, QueryRequest, StdResult, WasmQuery,Decimal256, Uint256};
 
 // use moneymarket::liquidation::{LiquidationAmountResponse, QueryMsg as LiquidationQueryMsg};
 use moneymarket::liquidation_queue::{LiquidationAmountResponse, QueryMsg as LiquidationQueryMsg};
@@ -9,7 +8,7 @@ use moneymarket::tokens::TokensHuman;
 pub fn query_market_state(deps: Deps, market_addr: Addr) -> StdResult<StateResponse> {
     let epoch_state: StateResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: market_addr.to_string(),
-        msg: to_binary(&MarketQueryMsg::State {})?,
+        msg: to_json_binary(&MarketQueryMsg::State {})?,
     }))?;
 
     Ok(epoch_state)
@@ -24,7 +23,7 @@ pub fn query_borrower_info(
     let borrower_amount: BorrowerInfoResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: market_addr.to_string(),
-            msg: to_binary(&MarketQueryMsg::BorrowerInfo {
+            msg: to_json_binary(&MarketQueryMsg::BorrowerInfo {
                 borrower: borrower.to_string(),
             })?,
         }))?;
@@ -44,7 +43,7 @@ pub fn query_liquidation_amount(
     let liquidation_amount_res: LiquidationAmountResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: liquidation_contract.to_string(),
-            msg: to_binary(&LiquidationQueryMsg::LiquidationAmount {
+            msg: to_json_binary(&LiquidationQueryMsg::LiquidationAmount {
                 borrow_amount,
                 borrow_limit,
                 collaterals: collaterals.clone(),

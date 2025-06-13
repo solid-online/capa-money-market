@@ -1,7 +1,7 @@
-use cosmwasm_bignumber::math::{Decimal256, Uint256};
 use cosmwasm_std::{
-    attr, to_binary, Binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, WasmMsg,
+    attr, to_json_binary, Binary, CosmosMsg, Decimal256, DepsMut, Env, MessageInfo, Response, Uint256, WasmMsg,
 };
+use std::convert::TryInto;
 use cw20::Cw20ExecuteMsg;
 use moneymarket::market::ExecuteMsg;
 
@@ -28,9 +28,9 @@ pub fn flash_mint(
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.stable_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
+            msg: to_json_binary(&Cw20ExecuteMsg::Mint {
                 recipient: info.sender.to_string(),
-                amount: amount.into(),
+                amount: amount.try_into().unwrap(),
             })?,
         }),
         //Callback
@@ -43,7 +43,7 @@ pub fn flash_mint(
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.to_string(),
             funds: vec![],
-            msg: to_binary(&ExecuteMsg::PrivateFlashEnd {
+            msg: to_json_binary(&ExecuteMsg::PrivateFlashEnd {
                 flash_minter: info.sender.to_string(),
                 burn_amount: amount,
                 fee_amount,
@@ -80,9 +80,9 @@ pub fn private_flash_end(
     messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: config.stable_contract.to_string(),
         funds: vec![],
-        msg: to_binary(&Cw20ExecuteMsg::BurnFrom {
+        msg: to_json_binary(&Cw20ExecuteMsg::BurnFrom {
             owner: flash_minter.to_string(),
-            amount: burn_amount.into(),
+            amount: burn_amount.try_into().unwrap(),
         })?,
     }));
 
@@ -91,10 +91,10 @@ pub fn private_flash_end(
         messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.stable_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
+            msg: to_json_binary(&Cw20ExecuteMsg::TransferFrom {
                 owner: flash_minter,
                 recipient: config.collector_contract.to_string(),
-                amount: fee_amount.into(),
+                amount: fee_amount.try_into().unwrap(),
             })?,
         }));
     }
