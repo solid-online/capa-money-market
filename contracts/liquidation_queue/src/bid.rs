@@ -613,8 +613,8 @@ fn execute_pool_liquidation(
         bid_pool.product_snapshot = if new_product < threshold {
             bid_pool.current_scale += Uint128::from(1u128);
 
-            let scaled_snapshot = Decimal256::from_ratio(
-                bid_pool.product_snapshot.atomics() * Uint256::from(1_000_000_000u64),
+            let scaled_snapshot = bid_pool.product_snapshot * Decimal256::from_ratio(
+                Uint256::from(1_000_000_000u64),
                 Uint256::one(),
             );
 
@@ -644,16 +644,13 @@ pub(crate) fn calculate_remaining_bid(
             * bid_pool.product_snapshot
             / bid.product_snapshot;
 
-        Decimal256::from_ratio(
-            scaled_remaining_bid.atomics(),
-            Uint256::from(1_000_000_000u64),
-        )
+        scaled_remaining_bid
+            / Decimal256::from_ratio(Uint256::from(1_000_000_000u64), Uint256::one())
     } else {
         Decimal256::zero()
     };
 
     let remaining_bid = remaining_bid_dec * Uint256::one();
-    // stacks the residue when converting to integer
     let bid_residue = remaining_bid_dec - Decimal256::from_ratio(remaining_bid, Uint256::one());
 
     Ok((remaining_bid, bid_residue))
@@ -672,8 +669,12 @@ pub(crate) fn calculate_liquidated_collateral(
     )
     .unwrap_or_default();
 
-    // reward = reward from first scale + reward from second scale (if any)
-    let first_portion = reference_sum_snapshot - bid.sum_snapshot;
+    let first_portion = if reference_sum_snapshot >= bid.sum_snapshot {
+        reference_sum_snapshot - bid.sum_snapshot
+    } else {
+        Decimal256::zero()
+    };
+
     let second_portion = if let Ok(second_scale_sum_snapshot) = read_epoch_scale_sum(
         storage,
         &bid.collateral_token,
@@ -681,23 +682,18 @@ pub(crate) fn calculate_liquidated_collateral(
         bid.epoch_snapshot,
         bid.scale_snapshot + Uint128::from(1u128),
     ) {
-        Decimal256::from_ratio(
-            second_scale_sum_snapshot.atomics() - reference_sum_snapshot.atomics(),
-            Uint256::from(1_000_000_000u64),
-        )
+        second_scale_sum_snapshot
     } else {
         Decimal256::zero()
     };
 
-    let liquidated_collateral_dec = Decimal256::from_ratio(bid.amount, Uint256::one())
-        * (first_portion + second_portion)
-        / bid.product_snapshot;
-    let liquidated_collateral = liquidated_collateral_dec * Uint256::one();
-    // stacks the residue when converting to integer
-    let residue_collateral =
-        liquidated_collateral_dec - Decimal256::from_ratio(liquidated_collateral, Uint256::one());
+    let reward = first_portion + second_portion;
+    let reward_scaled = reward * Decimal256::from_ratio(bid.amount, Uint256::one());
 
-    Ok((liquidated_collateral, residue_collateral))
+    let reward_amount = reward_scaled * Uint256::one();
+    let residue = reward_scaled - Decimal256::from_ratio(reward_amount, Uint256::one());
+
+    Ok((reward_amount, residue))
 }
 
 fn claim_col_residue(bid_pool: &mut BidPool) -> Uint256 {

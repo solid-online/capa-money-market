@@ -573,6 +573,8 @@ fn one_user_two_bid_slots() {
     };
     let info = mock_info("alice0000", &[]);
     let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+    println!("first assert res: {:?}", res); 
     assert_eq!(
         res.attributes,
         vec![
@@ -597,6 +599,7 @@ fn one_user_two_bid_slots() {
     });
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
+    println!("EXECUTED 10 COL AT  10UST/COL"); 
     // ALICE CAN CLAIM FROM ALL BIDS
     let msg = ExecuteMsg::ClaimLiquidations {
         collateral_token: "col0000".to_string(),

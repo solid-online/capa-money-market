@@ -62,7 +62,7 @@ pub fn withdraw_collateral(
     // if spenable is less then amount return error
     if borrower_info.spendable < amount {
         return Err(ContractError::WithdrawAmountExceedsSpendable(
-            borrower_info.spendable.try_into().unwrap(),
+            borrower_info.spendable,
         ));
     }
 
