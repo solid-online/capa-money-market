@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal256};
 use cw_storage_plus::{Item, Map};
-use moneymarket::oracle::Source;
+use solid_moneymarket::oracle::Source;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

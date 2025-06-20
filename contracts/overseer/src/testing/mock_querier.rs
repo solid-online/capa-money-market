@@ -9,10 +9,10 @@ use cosmwasm_std::{
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use cosmwasm_std::Empty;
-use moneymarket::liquidation::LiquidationAmountResponse;
-use moneymarket::market::{BorrowerInfoResponse, StateResponse};
-use moneymarket::oracle::PriceResponse;
-use moneymarket::tokens::TokensHuman;
+use solid_moneymarket::liquidation::LiquidationAmountResponse;
+use solid_moneymarket::market::{BorrowerInfoResponse, StateResponse};
+use solid_moneymarket::oracle::PriceResponse;
+use solid_moneymarket::tokens::TokensHuman;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

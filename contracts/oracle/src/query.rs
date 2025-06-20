@@ -3,7 +3,7 @@ use std::cmp::min;
 use cosmwasm_std::{Deps, Env, Order, StdResult,Decimal256};
 
 use cw_storage_plus::Bound;
-use moneymarket::oracle::{
+use solid_moneymarket::oracle::{
     ConfigResponse, PriceResponse, PricesResponse, PricesResponseElem, SourceInfoResponse,
 };
 

@@ -3,7 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use moneymarket::liquidation_queue::{
+use solid_moneymarket::liquidation_queue::{
     BidPoolResponse, BidPoolsResponse, BidResponse, BidsResponse, CollateralInfoResponse,
     ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, LiquidationAmountResponse, QueryMsg,
 };

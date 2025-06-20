@@ -1,5 +1,5 @@
 use cosmwasm_std::{to_json_binary, QuerierWrapper, QueryRequest, StdResult, WasmQuery};
-use moneymarket::overseer::{
+use solid_moneymarket::overseer::{
     QueryMsg as OverseerQueryMsg, WhitelistResponse, WhitelistResponseElem,
 };
 

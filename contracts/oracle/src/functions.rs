@@ -9,7 +9,7 @@ use astroport::{
 use cosmwasm_std::{
     to_json_binary, Addr, Deps, Env, Isqrt, QueryRequest, Uint128, Uint256 , WasmQuery,Decimal256,
 };
-use moneymarket::oracle::{PathKey, Source};
+use solid_moneymarket::oracle::{PathKey, Source};
 use serde_json::Value;
 
 use crate::{

@@ -4,7 +4,7 @@ use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use cosmwasm_std::{
     from_json, to_json_binary, Addr, Isqrt, OwnedDeps, QueryRequest, Uint256 ,Decimal256,
 };
-use moneymarket::oracle::{
+use solid_moneymarket::oracle::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, PathKey, PriceResponse, PricesResponse,
     PricesResponseElem, QueryMsg, RegisterSource, UpdateSource,
 };

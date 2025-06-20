@@ -6,7 +6,7 @@ use crate::testing::mock_querier::mock_dependencies;
 
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cw20::Cw20ReceiveMsg;
-use moneymarket::custody::{
+use solid_moneymarket::custody::{
     BorrowerResponse, ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg,
 };
 

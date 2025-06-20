@@ -11,11 +11,11 @@ use cosmwasm_std::{
     SubMsgResponse, SubMsgResult, Uint128, Uint256, WasmMsg,
 };
 use cw20::{Cw20Coin, Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
-use moneymarket::market::{
+use solid_moneymarket::market::{
     BorrowerInfoResponse, ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg,
     StateResponse,
 };
-use moneymarket::terraswap::InstantiateMsg as TokenInstantiateMsg;
+use solid_moneymarket::terraswap::InstantiateMsg as TokenInstantiateMsg;
 use protobuf::Message;
 use std::str::FromStr;
 

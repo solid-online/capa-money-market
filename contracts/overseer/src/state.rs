@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Addr, Deps, Order, StdError, StdResult, Storage,Decimal256, Uint256};
 use cosmwasm_storage::{Bucket, ReadonlyBucket, ReadonlySingleton, Singleton};
 
-use moneymarket::overseer::{CollateralsResponse, WhitelistResponseElem};
-use moneymarket::tokens::Tokens;
+use solid_moneymarket::overseer::{CollateralsResponse, WhitelistResponseElem};
+use solid_moneymarket::tokens::Tokens;
 
 const KEY_CONFIG: &[u8] = b"config";
 

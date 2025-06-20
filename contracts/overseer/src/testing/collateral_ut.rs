@@ -4,8 +4,8 @@ use crate::testing::mock_querier::mock_dependencies;
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{Addr, Decimal256, Uint256};
 
-use moneymarket::overseer::{ExecuteMsg, InstantiateMsg};
-use moneymarket::tokens::{Token, Tokens};
+use solid_moneymarket::overseer::{ExecuteMsg, InstantiateMsg};
+use solid_moneymarket::tokens::{Token, Tokens};
 
 #[test]
 fn proper_compute_borrow_limit() {

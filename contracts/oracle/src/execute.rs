@@ -2,7 +2,7 @@ use cosmwasm_std::{
     attr, Addr, Attribute, Decimal256, Decimal, DepsMut, Empty, Env, MessageInfo, QueryRequest, Response,
     StdError,
 };
-use moneymarket::oracle::{
+use solid_moneymarket::oracle::{
     FeedPriceInfo, PathKey, RegisterSource, Source, UpdateSource, BASE_PRECISION,
 };
 

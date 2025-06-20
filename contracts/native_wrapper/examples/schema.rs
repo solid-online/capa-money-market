@@ -3,7 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use moneymarket::native_wrapper::{
+use solid_moneymarket::native_wrapper::{
     ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg,
 };
 use native_wrapper::state::State;

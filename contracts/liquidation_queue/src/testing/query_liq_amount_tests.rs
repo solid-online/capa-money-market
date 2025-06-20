@@ -6,8 +6,8 @@ use cosmwasm_std::{
 };
 use cw20::Cw20ExecuteMsg;
 use cw20::Cw20ReceiveMsg;
-use moneymarket::liquidation::MarketExecuteMsg;
-use moneymarket::liquidation_queue::{
+use solid_moneymarket::liquidation::MarketExecuteMsg;
+use solid_moneymarket::liquidation_queue::{
     Cw20HookMsg, ExecuteMsg, InstantiateMsg, LiquidationAmountResponse, QueryMsg,
 };
 #[test]

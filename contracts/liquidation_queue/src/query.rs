@@ -5,12 +5,12 @@ use crate::state::{
     read_total_bids, Bid, BidPool, CollateralInfo, Config,
 };
 use cosmwasm_std::{Decimal256, Deps, StdResult, Uint128, Uint256};
-use moneymarket::liquidation_queue::{
+use solid_moneymarket::liquidation_queue::{
     BidPoolResponse, BidPoolsResponse, BidResponse, BidsResponse, CollateralInfoResponse,
     ConfigResponse, LiquidationAmountResponse,
 };
 
-use moneymarket::tokens::TokensHuman;
+use solid_moneymarket::tokens::TokensHuman;
 
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = read_config(deps.storage)?;

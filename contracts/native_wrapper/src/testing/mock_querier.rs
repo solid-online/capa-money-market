@@ -1,4 +1,4 @@
-use moneymarket::oracle::PriceResponse;
+use solid_moneymarket::oracle::PriceResponse;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

@@ -1,5 +1,5 @@
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
-use moneymarket::oracle::{
+use solid_moneymarket::oracle::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PricesResponse, PricesResponseElem,
     QueryMsg, SourceInfoResponse,
 };

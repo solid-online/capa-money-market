@@ -14,8 +14,8 @@ use crate::state::{
     WhitelistElem,
 };
 
-use moneymarket::common::optional_addr_validate;
-use moneymarket::overseer::{
+use solid_moneymarket::common::optional_addr_validate;
+use solid_moneymarket::overseer::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, WhitelistResponse,
     WhitelistResponseElem,
 };

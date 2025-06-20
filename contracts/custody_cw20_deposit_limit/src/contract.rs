@@ -15,8 +15,8 @@ use crate::state::{
 };
 
 use cw20::Cw20ReceiveMsg;
-use moneymarket::common::optional_addr_validate;
-use moneymarket::custody_deposit_cap::{
+use solid_moneymarket::common::optional_addr_validate;
+use solid_moneymarket::custody_deposit_cap::{
     ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
 };
 

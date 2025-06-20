@@ -5,8 +5,8 @@ use crate::testing::mock_querier::mock_dependencies;
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{attr, to_json_binary, Decimal256, StdError, Uint128, Uint256,from_json};
 use cw20::Cw20ReceiveMsg;
-use moneymarket::liquidation_queue::{Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
-use moneymarket::liquidation_queue::{BidPoolResponse, BidResponse};
+use solid_moneymarket::liquidation_queue::{Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
+use solid_moneymarket::liquidation_queue::{BidPoolResponse, BidResponse};
 
 
 #[test]

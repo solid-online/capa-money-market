@@ -3,10 +3,11 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use moneymarket::market::{
+use solid_moneymarket::market::{
     BorrowerInfoResponse, BorrowerInfosResponse, ConfigResponse, Cw20HookMsg, ExecuteMsg,
-    InstantiateMsg, QueryMsg,
+    InstantiateMsg, QueryMsg
 };
+
 use moneymarket_market::state::State;
 
 fn main() {

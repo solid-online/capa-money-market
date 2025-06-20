@@ -3,7 +3,7 @@ use cosmwasm_std::{
 };
 use std::convert::TryInto;
 use cw20::Cw20ExecuteMsg;
-use moneymarket::market::ExecuteMsg;
+use solid_moneymarket::market::ExecuteMsg;
 
 use crate::{error::ContractError, state::read_config};
 

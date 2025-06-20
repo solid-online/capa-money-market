@@ -7,7 +7,7 @@ use crate::state::{Config, CONFIG};
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 
-use moneymarket::oracle::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use solid_moneymarket::oracle::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 #[entry_point]
 pub fn instantiate(

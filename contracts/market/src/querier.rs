@@ -1,7 +1,7 @@
 use cosmwasm_std::{to_json_binary, Addr, Deps, QueryRequest, StdResult, WasmQuery , Decimal256};
 
-use moneymarket::interest_model::{BorrowRateResponse, QueryMsg as InterestQueryMsg};
-use moneymarket::overseer::{BorrowLimitResponse, QueryMsg as OverseerQueryMsg};
+use solid_moneymarket::interest_model::{BorrowRateResponse, QueryMsg as InterestQueryMsg};
+use solid_moneymarket::overseer::{BorrowLimitResponse, QueryMsg as OverseerQueryMsg};
 
 pub fn query_borrow_rate(
     deps: Deps,

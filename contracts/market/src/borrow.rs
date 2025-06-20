@@ -3,10 +3,10 @@ use cosmwasm_std::{
     StdResult, Uint256, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
-use moneymarket::market::{BorrowerInfoResponse, BorrowerInfosResponse};
-use moneymarket::oracle::PriceResponse;
-use moneymarket::overseer::BorrowLimitResponse;
-use moneymarket::querier::{query_price, TimeConstraints};
+use solid_moneymarket::market::{BorrowerInfoResponse, BorrowerInfosResponse};
+use solid_moneymarket::oracle::PriceResponse;
+use solid_moneymarket::overseer::BorrowLimitResponse;
+use solid_moneymarket::querier::{query_price, TimeConstraints};
 use std::convert::TryInto;
 use std::ops::{Div};
 

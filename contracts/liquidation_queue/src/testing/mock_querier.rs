@@ -4,8 +4,8 @@ use cosmwasm_std::{
     from_json, to_json_binary, Coin, ContractResult, OwnedDeps, Querier, QuerierResult,
     QueryRequest, SystemError, SystemResult, WasmQuery,Decimal256
 };
-use moneymarket::oracle::PriceResponse;
-use moneymarket::overseer::{WhitelistResponse, WhitelistResponseElem};
+use solid_moneymarket::oracle::PriceResponse;
+use solid_moneymarket::overseer::{WhitelistResponse, WhitelistResponseElem};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

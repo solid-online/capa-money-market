@@ -6,9 +6,9 @@ use crate::testing::mock_querier::mock_dependencies;
 use cosmwasm_std::testing::{mock_env, mock_info};
 use cosmwasm_std::{attr, from_json, to_json_binary, CosmosMsg, SubMsg, WasmMsg, Decimal256, Uint256};
 
-use moneymarket::custody::ExecuteMsg as CustodyExecuteMsg;
+use solid_moneymarket::custody::ExecuteMsg as CustodyExecuteMsg;
 
-use moneymarket::overseer::{
+use solid_moneymarket::overseer::{
     AllCollateralsResponse, BorrowLimitResponse, CollateralsResponse, ConfigResponse, ExecuteMsg,
     InstantiateMsg, QueryMsg, WhitelistResponse, WhitelistResponseElem,
 };

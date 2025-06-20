@@ -1,4 +1,4 @@
-use moneymarket::oracle::PriceResponse;
+use solid_moneymarket::oracle::PriceResponse;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -13,8 +13,8 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use cosmwasm_std::Empty;
 use cw20::TokenInfoResponse;
-use moneymarket::interest_model::BorrowRateResponse;
-use moneymarket::overseer::{BorrowLimitResponse, ConfigResponse};
+use solid_moneymarket::interest_model::BorrowRateResponse;
+use solid_moneymarket::overseer::{BorrowLimitResponse, ConfigResponse};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

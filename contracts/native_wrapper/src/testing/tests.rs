@@ -10,10 +10,10 @@ use cosmwasm_std::{
     Uint128, WasmMsg, Decimal256,
 };
 use cw20::{Cw20Coin, Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
-use moneymarket::native_wrapper::{
+use solid_moneymarket::native_wrapper::{
     ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg, StateResponse,
 };
-use moneymarket::terraswap::InstantiateMsg as TokenInstantiateMsg;
+use solid_moneymarket::terraswap::InstantiateMsg as TokenInstantiateMsg;
 use protobuf::Message;
 
 const INITIAL_DEPOSIT_AMOUNT: u128 = 1000000;

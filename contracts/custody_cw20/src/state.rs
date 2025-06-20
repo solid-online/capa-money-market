@@ -1,5 +1,5 @@
 use schemars::JsonSchema;
-use moneymarket::custody::BorrowerResponse;
+use solid_moneymarket::custody::BorrowerResponse;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage, Uint256};

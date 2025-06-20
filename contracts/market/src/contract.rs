@@ -11,11 +11,11 @@ use cosmwasm_std::{
 };
 use cw20::{Cw20Coin, Cw20ReceiveMsg, MinterResponse};
 
-use moneymarket::common::optional_addr_validate;
-use moneymarket::market::{
+use solid_moneymarket::common::optional_addr_validate;
+use solid_moneymarket::market::{
     ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, StateResponse,
 };
-use moneymarket::terraswap::InstantiateMsg as TokenInstantiateMsg;
+use solid_moneymarket::terraswap::InstantiateMsg as TokenInstantiateMsg;
 use protobuf::Message;
 
 pub const INITIAL_DEPOSIT_AMOUNT: u128 = 1000000;

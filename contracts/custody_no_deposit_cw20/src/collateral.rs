@@ -11,8 +11,8 @@ use cosmwasm_std::{
     Uint256, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
-use moneymarket::custody::{BorrowerResponse, BorrowersResponse};
-use moneymarket::liquidation::Cw20HookMsg as LiquidationCw20HookMsg;
+use solid_moneymarket::custody::{BorrowerResponse, BorrowersResponse};
+use solid_moneymarket::liquidation::Cw20HookMsg as LiquidationCw20HookMsg;
 
 /// Deposit new collateral
 /// Executor: Collateral token contract

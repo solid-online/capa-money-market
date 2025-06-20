@@ -9,7 +9,7 @@ use cosmwasm_std::{
     from_json, to_json_binary, Decimal256, MemoryStorage, OwnedDeps, Uint128, Uint256,
 };
 use cw20::Cw20ReceiveMsg;
-use moneymarket::liquidation_queue::{
+use solid_moneymarket::liquidation_queue::{
     BidsResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg,
 };
 

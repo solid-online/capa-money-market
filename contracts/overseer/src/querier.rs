@@ -1,9 +1,9 @@
 use cosmwasm_std::{to_json_binary, Addr, Deps, QueryRequest, StdResult, WasmQuery,Decimal256, Uint256};
 
 // use moneymarket::liquidation::{LiquidationAmountResponse, QueryMsg as LiquidationQueryMsg};
-use moneymarket::liquidation_queue::{LiquidationAmountResponse, QueryMsg as LiquidationQueryMsg};
-use moneymarket::market::{BorrowerInfoResponse, QueryMsg as MarketQueryMsg, StateResponse};
-use moneymarket::tokens::TokensHuman;
+use solid_moneymarket::liquidation_queue::{LiquidationAmountResponse, QueryMsg as LiquidationQueryMsg};
+use solid_moneymarket::market::{BorrowerInfoResponse, QueryMsg as MarketQueryMsg, StateResponse};
+use solid_moneymarket::tokens::TokensHuman;
 
 pub fn query_market_state(deps: Deps, market_addr: Addr) -> StdResult<StateResponse> {
     let epoch_state: StateResponse = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {

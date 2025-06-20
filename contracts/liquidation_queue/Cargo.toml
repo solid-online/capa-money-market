@@ -19,7 +19,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 cw20 = { workspace = true }
-moneymarket = { workspace = true }
+solid-moneymarket = { workspace = true }
 cosmwasm-std = { workspace = true }
 cosmwasm-storage = { workspace = true }
 schemars = { workspace = true }
