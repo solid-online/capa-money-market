@@ -18,15 +18,15 @@ exclude = [
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-moneymarket = { path = "../../packages/moneymarket", default-features = false, version = "0.3.1"}
-capa-token = { path = "../../packages/capa_token"}
+moneymarket = { workspace = true}
+capa-token = { workspace = true}
 cw20 = { workspace = true }
-protobuf = { version = "2", features = ["with-bytes"] }
+protobuf = { workspace = true }
 terraswap = { workspace = true }
 cosmwasm-std = { workspace = true }
 cosmwasm-storage = { workspace = true }
 schemars = { workspace = true }
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+serde = { workspace = true }
 thiserror = { workspace = true }
 cosmwasm-schema = { workspace = true }
 

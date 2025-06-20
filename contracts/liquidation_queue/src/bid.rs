@@ -613,10 +613,8 @@ fn execute_pool_liquidation(
         bid_pool.product_snapshot = if new_product < threshold {
             bid_pool.current_scale += Uint128::from(1u128);
 
-            let scaled_snapshot = bid_pool.product_snapshot * Decimal256::from_ratio(
-                Uint256::from(1_000_000_000u64),
-                Uint256::one(),
-            );
+            let scaled_snapshot = bid_pool.product_snapshot
+                * Decimal256::from_ratio(Uint256::from(1_000_000_000u64), Uint256::one());
 
             scaled_snapshot * product
         } else {
@@ -682,18 +680,20 @@ pub(crate) fn calculate_liquidated_collateral(
         bid.epoch_snapshot,
         bid.scale_snapshot + Uint128::from(1u128),
     ) {
-        second_scale_sum_snapshot
+        (second_scale_sum_snapshot - reference_sum_snapshot) / Decimal256::from_ratio(Uint256::from(1_000_000_000u64), Uint256::one())
     } else {
         Decimal256::zero()
     };
 
     let reward = first_portion + second_portion;
-    let reward_scaled = reward * Decimal256::from_ratio(bid.amount, Uint256::one());
+    let liquidated_collateral_dec =
+        Decimal256::from_ratio(bid.amount, Uint256::one()) * reward / bid.product_snapshot;
 
-    let reward_amount = reward_scaled * Uint256::one();
-    let residue = reward_scaled - Decimal256::from_ratio(reward_amount, Uint256::one());
+    let liquidated_collateral = liquidated_collateral_dec * Uint256::one();
+    let residue_collateral =
+        liquidated_collateral_dec - Decimal256::from_ratio(liquidated_collateral, Uint256::one());
 
-    Ok((reward_amount, residue))
+    Ok((liquidated_collateral, residue_collateral))
 }
 
 fn claim_col_residue(bid_pool: &mut BidPool) -> Uint256 {

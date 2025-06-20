@@ -375,7 +375,7 @@ fn activate_bid() {
             bidder: "addr0000".to_string(),
             amount: Uint256::from(1000000u128),
             premium_slot: 1u8,
-            product_snapshot: Decimal256::one(),
+            product_snapshot: Decimal256::from_ratio(Decimal256::one().atomics(), Uint256::one()),
             sum_snapshot: Decimal256::zero(),
             pending_liquidated_collateral: Uint256::zero(),
             wait_end: None,

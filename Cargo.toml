@@ -10,6 +10,7 @@ authors             = ["BIG Labs"]
 [workspace.dependencies]
 astroport           = "3.6.1"
 moneymarket         = { path = "packages/moneymarket" }
+capa-token          = { path = "packages/capa_token" }
 cosmwasm-schema     = "1.5.0"
 cosmwasm-std        = "1.5.0"
 cosmwasm-storage    = "1.5.2"

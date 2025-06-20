@@ -16,7 +16,7 @@ pub enum ContractError {
     BorrowExceedsLimit(Uint256),
 
     #[error("Must deposit initial funds {0}{0}")]
-    InitialFundsNotDeposited(u128, String),
+    InitialFundsNotDeposited(Uint256, String),
 
     #[error("Invalid reply ID")]
     InvalidReplyId {},

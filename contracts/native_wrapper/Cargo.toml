@@ -19,7 +19,7 @@ crate-type = ["cdylib", "rlib"]
 
 
 [dependencies]
-moneymarket = { path = "../../packages/moneymarket", default-features = false, version = "0.3.1"}
+moneymarket = { workspace = true}
 cw20 = { workspace = true }
 protobuf = { workspace = true }
 cosmwasm-std = { workspace = true }

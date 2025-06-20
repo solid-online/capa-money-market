@@ -20,7 +20,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 moneymarket = { workspace = true }
 cw20 =  { workspace = true }
-astroport = {path = "../../packages/astroport"}
+astroport = { workspace = true }
 cosmwasm-std = { workspace = true }
 cosmwasm-storage = { workspace = true }
 schemars = { workspace = true }

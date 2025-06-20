@@ -14,7 +14,7 @@ documentation = "https://docs.terra.money"
 
 [dependencies]
 cw20 = { workspace = true}
-astroport = { path = "../astroport" }
+astroport = { workspace = true}
 cosmwasm-storage = { workspace = true}
 cosmwasm-std = { workspace = true}
 schemars = { workspace = true}

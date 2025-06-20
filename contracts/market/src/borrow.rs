@@ -114,13 +114,9 @@ pub fn repay_stable(
         }));
     } else {
         repay_amount = amount;
-        let loan_amount_decimal = Decimal256::from_ratio(liability.loan_amount, Uint256::one());
-        let burn_ratio =
-            Decimal256::from_ratio(liability.loan_amount_without_interest, Uint256::one())
-                / loan_amount_decimal;
 
-        burn_amount =
-            repay_amount.multiply_ratio(burn_ratio.atomics(), Decimal256::one().atomics());
+        let numerator = repay_amount * liability.loan_amount_without_interest;
+        burn_amount = numerator / liability.loan_amount;
         liability.loan_amount = liability.loan_amount - repay_amount;
         liability.loan_amount_without_interest =
             liability.loan_amount_without_interest - burn_amount;

@@ -599,7 +599,6 @@ fn one_user_two_bid_slots() {
     });
     execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-    println!("EXECUTED 10 COL AT  10UST/COL"); 
     // ALICE CAN CLAIM FROM ALL BIDS
     let msg = ExecuteMsg::ClaimLiquidations {
         collateral_token: "col0000".to_string(),
@@ -607,6 +606,7 @@ fn one_user_two_bid_slots() {
     };
     let info = mock_info("alice0000", &[]);
     let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+    println!("second assert res: {:?}", res);
     assert_eq!(
         res.attributes,
         vec![
@@ -1121,7 +1121,7 @@ fn product_truncated_to_zero() {
         vec![
             attr("action", "retract_bid"),
             attr("bid_idx", "8"),
-            attr("amount", "39"), // 5 * 8 = 40 missing 1ucol due to rounding
+            attr("amount", "40"),
         ]
     );
 }

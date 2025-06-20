@@ -190,7 +190,7 @@ pub fn read_or_create_bid_pool(
         Err(_) => {
             if (0..collateral_info.max_slot + 1).contains(&premium_slot) {
                 let bid_pool = BidPool {
-                    product_snapshot: Decimal256::one(),
+                    product_snapshot: Decimal256::from_ratio(Decimal256::one().atomics(), Uint256::one()),
                     sum_snapshot: Decimal256::zero(),
                     total_bid_amount: Uint256::zero(),
                     premium_rate: collateral_info.premium_rate_per_slot
